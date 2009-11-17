@@ -1,5 +1,8 @@
 /*
+ * IgernaServer.java, version 0.1 (2009-11)
+ *
  * Copyright (C) Marcin Badurowicz 2009
+ *
  *
  * This file is part of Igerna.
  *
@@ -18,16 +21,6 @@
  */
 package info.ktos.igerna;
 
-/**
- * IgernaServer
- *
- * Główna, uruchomieniowa klasa aplikacji, którazajmuje się bądź uruchomieniem
- * serwera, bądź pokazaniem pewnych dodatkowych informacji.
- *
- * @category    Igerna
- * @author      Marcin Badurowicz <ktos at ktos dot info>
- * @version     0.1
- */
 public class IgernaServer
 {
 
@@ -42,14 +35,25 @@ public class IgernaServer
     public static void main(String[] args)
     {
         if ((args.length == 1) && (args[0].equals("--version")))
+		{
             IgernaServer.showVersion();
+		}
     }
 
+	/**
+	 * Pokazywanie informacji o wersji i licencji
+	 */
     private static void showVersion()
     {
         System.out.println("Igerna version 0.1.0.0");
+		System.out.println("");
         System.out.println("Copyright (C) Marcin Badurowicz 2009");
+        System.out.println("Licencja GPLv3+: GNU GPL w wersji 3 lub późniejszej");
+		System.out.println("<http://www.gnu.org/licenses/gpl.html>.");
         System.out.println("");
+		System.out.println("Niniejszy program jest oprogramowaniem wolnodostępnym: można go");
+		System.out.println("modyfikować i rozpowszechniać.");
+		System.out.println("Nie ma ŻADNEJ GWARANCJI w zakresie dopuszczalnym przez prawo.");
     }
 
 }
