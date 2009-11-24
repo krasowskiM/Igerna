@@ -1,5 +1,5 @@
 /*
- * IgernaServer.java, version 0.1 (2009-11)
+ * Igerna, version 0.1
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -26,19 +26,24 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class IgernaServer
-{
-
-    //private ThreadPool workerPool;
+{    
     private static Config config;
     private static String configFile = "igerna.conf";
     private static ServerSocket serv;
     private static boolean stopped;
 
+    /**
+     * Sprawdza czy serwer nie jest zatrzymany
+     * @return
+     */
     public static boolean isStopped()
     {
         return stopped;
     }
 
+    /**
+     * Zatrzymuje pracę serwera
+     */
     public static void stop()
     {
         stopped = true;
@@ -111,26 +116,29 @@ public class IgernaServer
         }
     }
 
-	/**
-	 * Pokazywanie informacji o wersji i licencji
-	 */
+    /**
+     * Pokazywanie informacji o wersji i licencji
+     */
     private static void showVersion()
     {
         System.out.println("Igerna version 0.1.0.0");
-		System.out.println("");
+	System.out.println("");
         System.out.println("Copyright (C) Marcin Badurowicz 2009");
         System.out.println("Licencja GPLv3+: GNU GPL w wersji 3 lub późniejszej");
-		System.out.println("<http://www.gnu.org/licenses/gpl.html>.");
+	System.out.println("<http://www.gnu.org/licenses/gpl.html>.");
         System.out.println("");
-		System.out.println("Niniejszy program jest oprogramowaniem wolnodostępnym: można go");
-		System.out.println("modyfikować i rozpowszechniać.");
-		System.out.println("Nie ma ŻADNEJ GWARANCJI w zakresie dopuszczalnym przez prawo.");
+	System.out.println("Niniejszy program jest oprogramowaniem wolnodostępnym: można go");
+	System.out.println("modyfikować i rozpowszechniać.");
+	System.out.println("Nie ma ŻADNEJ GWARANCJI w zakresie dopuszczalnym przez prawo.");
     }
 
+    /**
+     * Pokazywanie informacji o użyciu i opcjach
+     */
     private static void showHelp()
     {
         System.out.println("Igerna version 0.1.0.0");
-		System.out.println("");
+	System.out.println("");
         System.out.println("Użycie: java IgernaServer.class [--version] [--help] [-C <plik>]");
         System.out.println("");
         System.out.println("  --version - pokazuje informacje o wersji serwera");
