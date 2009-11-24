@@ -21,7 +21,6 @@
  */
 package info.ktos.igerna;
 
-import com.sun.security.auth.login.ConfigFile;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
