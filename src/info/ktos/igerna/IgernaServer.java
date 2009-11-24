@@ -21,8 +21,29 @@
  */
 package info.ktos.igerna;
 
+import com.sun.security.auth.login.ConfigFile;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
 public class IgernaServer
 {
+
+    //private ThreadPool workerPool;
+    private static Config config;
+    private static String configFile = "igerna.conf";
+    private static ServerSocket serv;
+    private static boolean stopped;
+
+    public static boolean isStopped()
+    {
+        return stopped;
+    }
+
+    public static void stop()
+    {
+        stopped = true;
+    }
 
     /**
      * Główna metoda uruchomieniowa
@@ -34,10 +55,61 @@ public class IgernaServer
      */
     public static void main(String[] args)
     {
-        if ((args.length == 1) && (args[0].equals("--version")))
+        if (args.length == 1)
 		{
-            IgernaServer.showVersion();
+            if (args[0].equals("--version"))
+            {
+                IgernaServer.showVersion();
+            }
+            else if (args[0].equals("--help"))
+            {
+                IgernaServer.showHelp();
+            }
+            else if (args[0].startsWith("-C"))
+            {
+                System.out.println("Not implemented");
+            }
+            else
+            {
+                IgernaServer.showHelp();
+            }
 		}
+        else
+        {
+            config = new Config(configFile);
+
+            System.out.println("Uruchamianie...");
+            try
+            {
+                serv = new ServerSocket(5222);
+            }
+            catch (IOException ex)
+            {
+                System.out.println("Błąd tworzenia serwera, nie mogę utworzyć gniazda!");
+                stop();
+            }
+
+            while(!isStopped())
+            {
+                Socket clientSocket = null;
+                try
+                {
+                    clientSocket = serv.accept();
+                }
+                catch (IOException e)
+                {
+                    if(isStopped())
+                    {
+                        //System.out.println("Server Stopped.") ;
+                        return;
+                    }
+                }
+
+                new Thread(
+                        new Worker(clientSocket)
+                    ).start();
+            }
+        }
     }
 
 	/**
@@ -56,4 +128,16 @@ public class IgernaServer
 		System.out.println("Nie ma ŻADNEJ GWARANCJI w zakresie dopuszczalnym przez prawo.");
     }
 
+    private static void showHelp()
+    {
+        System.out.println("Igerna version 0.1.0.0");
+		System.out.println("");
+        System.out.println("Użycie: java IgernaServer.class [--version] [--help] [-C <plik>]");
+        System.out.println("");
+        System.out.println("  --version - pokazuje informacje o wersji serwera");
+        System.out.println("  --help - pokazuje tą informację");
+        System.out.println("  -C <plik> - ładuje konfigurację z podanego pliku, domyślnie");
+        System.out.println("              jest to plik igerna.conf");
+        System.out.println("");
+    }
 }
