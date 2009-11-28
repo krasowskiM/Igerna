@@ -21,9 +21,14 @@
  */
 package info.ktos.igerna;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IgernaServer
 {    
@@ -31,6 +36,20 @@ public class IgernaServer
     private static String configFile = "igerna.conf";
     private static ServerSocket serv;
     private static boolean stopped;
+    private static List<Worker> workerPool;
+
+    private static String bindHost;
+    private static int bindPort;
+
+    public static String getBindHost()
+    {
+        return bindHost;
+    }
+
+    public static int getBindPort()
+    {
+        return bindPort;
+    }
 
     /**
      * Sprawdza czy serwer nie jest zatrzymany
@@ -47,6 +66,7 @@ public class IgernaServer
     public static void stop()
     {
         stopped = true;
+        System.out.println("Status: Zatrzymywanie...");
     }
 
     /**
@@ -59,8 +79,11 @@ public class IgernaServer
      */
     public static void main(String[] args)
     {
+        // jeśli podano jakiś parametr, to musimy sprawdzić jaki
         if (args.length == 1)
-		{
+	{
+            // jeśli --version - pokaż informacje o wersji, inaczej help, inaczej
+            // załaduj konfigurację ze wskazanego pliku
             if (args[0].equals("--version"))
             {
                 IgernaServer.showVersion();
@@ -73,26 +96,59 @@ public class IgernaServer
             {
                 System.out.println("Not implemented");
             }
+            // jeżeli coś, czego nie rozpoznajemy, to pokaż pomoc
             else
             {
                 IgernaServer.showHelp();
             }
-		}
+	}
         else
         {
-            config = new Config(configFile);
-
-            System.out.println("Uruchamianie...");
+            // ładowanie pliku konfiguracyjnego
+            // i wczytywanie go do lokalnej tablicy w klasie Config
             try
             {
-                serv = new ServerSocket(5222);
+                config = new Config(configFile);
+                config.readFile();
+            }
+            catch (FileNotFoundException ex)
+            {
+                System.out.println("Błąd: nie znaleziono pliku konfiguracji, przyjmuję wartości domyślne");
             }
             catch (IOException ex)
             {
-                System.out.println("Błąd tworzenia serwera, nie mogę utworzyć gniazda!");
+                System.out.println("Błąd: nie mogę wczytać konfiguracji, przyjmuję wartości domyślne");
+            }            
+
+            System.out.println("Status: Uruchamianie...");
+            try
+            {
+                // odczyt hosta i portu do którego mam zbindować socket                                
+
+                bindPort = Integer.parseInt(config.getStringEntry("bind", "port", "5222"));
+                bindHost = config.getStringEntry("bind", "host", "localhost");
+                // podłączanie gniazda
+                SocketAddress sa = new InetSocketAddress(bindHost, bindPort);
+                serv = new ServerSocket();
+                serv.bind(sa);
+            }
+            catch (IOException ex)
+            {
+                System.out.println("Błąd: nie mogę utworzyć gniazda serwera, sprawdź czy nie jest uruchomiona inna instancja");
                 stop();
             }
+            catch (NumberFormatException ex)
+            {
+                System.out.println("Błąd: podano niepoprawny port do zbindowania");
+                stop();
+            }            
 
+            // tworzenie "puli" moich wątków
+            workerPool = new ArrayList<Worker>();
+
+            // główna pętla aplikacji
+            // jeśli ktoś się podłączył, to stwórz nowy wątek typu Worker
+            // i czekaj na połączenia dalej
             while(!isStopped())
             {
                 Socket clientSocket = null;
@@ -109,9 +165,9 @@ public class IgernaServer
                     }
                 }
 
-                new Thread(
-                        new Worker(clientSocket)
-                    ).start();
+                // dodawanie nowego wątku klasy Worker do puli i uruchamianie go
+                workerPool.add(new Worker(clientSocket));
+                new Thread(workerPool.get(workerPool.size() -1)).start();
             }
         }
     }

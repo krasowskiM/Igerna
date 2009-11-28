@@ -21,9 +21,15 @@
  */
 package info.ktos.igerna;
 
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
+
 class Config
 {
     private String path;
+    private BufferedReader rdr;
+    private String[] lines;
 
     /**
      * Konstruktor klasy Config, odczytywanie pliku konfiguracyjnego ze wskazanej
@@ -37,18 +43,81 @@ class Config
     }
 
     /**
-     * Pobieranie wpisu z pliku konfiguracyjnego
+     * Pobieranie wpisu typu string z pliku konfiguracyjnego
      *
-     * Metoda pobiera wartość danego wpisu z danej
+     * Metoda pobiera wartość danego wpisu (typu string) z danej
      * sekcji pliku konfiguracyjnego
      *
      * @param section Sekcja pliku
      * @param entry Wpis
+     * @param def Wartość zwracana w razie nieznalezienia sekcji/wartości
      * @return Zawartość danego wpisu
      */
-    public String getEntry(String section, String entry)
+    public String getStringEntry(String section, String entry, String def)
     {
-        return "";
+        String s;
+        String reg = String.format("^%s\\.%s([\\s]*)=([\\s]*)\"[a-z0-9.-]+\";$", section, entry);
+        Pattern r = Pattern.compile(reg);
+        Pattern r2 = Pattern.compile("\"[a-z0-9.-]+\"");
+
+        String result = def;
+
+        for (int i = 0; i < lines.length; i++)
+        {
+            Matcher m = r.matcher(lines[i]);
+            if (m.find())
+            {
+                Matcher m2 = r2.matcher(m.group());
+                if (m2.find())
+                {
+                    result = m2.group().replace("\"", "");
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Pobieranie wpisu typu array z pliku konfiguracyjnego
+     *
+     * Metoda pobiera wartość danego wpisu (typu array) z danej
+     * sekcji pliku konfiguracyjnego
+     *
+     * @param section Sekcja pliku
+     * @param entry Wpis
+     * @param def Wartość zwracana w razie nieznalezienia sekcji/wartości
+     * @return Zawartość danego wpisu jako tablica stringów
+     */
+    public String[] getArrayEntry(String section, String entry, String[] def)
+    {
+        String s;
+        String reg = String.format("^%1s.%2s(\\s*)=(\\s*)\\((\\s*\".*\",?\\s*)+\\);$", section, entry);
+        Pattern r = Pattern.compile(reg);
+        Pattern r2 = Pattern.compile("\\(.*\\)");
+
+        String[] result = def;
+
+        for (int i = 0; i < lines.length; i++)
+        {
+            Matcher m = r.matcher(lines[i]);
+            if (m.find())
+            {
+                Matcher m2 = r2.matcher(m.group());
+                if (m2.find())
+                {
+                    String t = m2.group().replace("(", "").replace(")", "").trim();
+                    result = t.split(",");
+                    
+                    for (int j = 0; j < result.length; j++)
+                    {
+                        result[j] = result[j].replace("\"", "").trim();
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -61,9 +130,26 @@ class Config
      * @param entry Nazwa wpisu
      * @param newValue Nowa wartość
      */
-    public void setEntry(String section, String entry, String newValue)
+    public void setStringEntry(String section, String entry, String newValue)
     {
 
     }
-    
+
+    public void readFile() throws FileNotFoundException, IOException
+    {
+        FileReader fileReader = new FileReader(path);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        List<String> l = new ArrayList<String>();
+        String line = null;
+        while ((line = bufferedReader.readLine()) != null)
+        {
+            // ignorowanie komentarzy i pustych linii
+            if (!line.startsWith("#") && !line.trim().equals(""))
+                l.add(line);
+        }
+        bufferedReader.close();
+
+        lines = l.toArray(new String[l.size()]);
+    }
+
 }
