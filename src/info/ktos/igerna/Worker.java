@@ -87,6 +87,7 @@ class Worker implements Runnable
 
                 }
                 else
+                // oczekiwanie na posczególne stanzas
                 {                    
                     stream = "<?xml version='1.0'?>" + cltext + "</stream:stream>";
                     InputStream xmlis = new ByteArrayInputStream(stream.getBytes());
