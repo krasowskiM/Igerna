@@ -66,8 +66,7 @@ class Worker extends Thread
             System.out.println("Błąd: " + ex.getLocalizedMessage());
             IgernaServer.stop();
         }
-
-        this.stopWorking();
+        
         System.out.println("Debug: tworzenie wątku");
     }
 
@@ -77,7 +76,7 @@ class Worker extends Thread
         try
         {
             xsr.start();
-            while (!stopped)
+            while (!stopped && (clientSocket.getRemoteSocketAddress() != null))
             {
                 /* sprawdzaj okresowo bufor, jeśli jest coś w buforze do wysłania, to wyślij
                    do klienta */
@@ -88,10 +87,14 @@ class Worker extends Thread
                     mbuf.clearBuffer();
                 }
 
-                Thread.sleep(200);
+                //Thread.sleep(500);
+                //System.out.println("Debug: Czytam bufor...");
                 Thread.yield();
             }
 
+            // gdy kończymy pracę albo klient się rozłączył, to
+            // zamykamy readera, gniazdko i cały wątek
+            xsr.stopWorking();
             clientSocket.close();
             System.out.println("Debug: wątek zamykany");
         }
@@ -103,9 +106,24 @@ class Worker extends Thread
         }
     }
 
+    /**
+     * Dodaje tekst do bufora, który to zostanie przy następnym
+     * "obrocie" pętli do niego wysłany
+     * @param xml
+     */
     public void sendToClient(String xml)
     {
         mbuf.addToBuffer(xml);
+    }
+
+    /**
+     * Wysyła do klienta informację natychmiast, bez żadnego "szemrania",
+     * co jest użyteczne na przykład przy krytycznych błędach strumienia
+     * @param xml
+     */
+    public void sendImmediately(String xml)
+    {
+        output.println(xml);
     }
 
 }

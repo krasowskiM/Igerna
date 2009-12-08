@@ -73,35 +73,46 @@ class XMPPStreamReader extends Thread
         while (!stopped)
         {
             try
-            {
+            {                
                 cltext = input.readLine();
-                cltext = "<?xml version='1.0'?>" + cltext + "</stream:stream>";
-                
-                InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
-                try
-                {
-                    xmldoc = parser.parse(xmlis);
-                    /*if (xmldoc.getElementsByTagName("stream:stream").item(0).getNodeName() == null)
-                    {
-                        output.println("<?xml version='1.0'?><stream:stream from='127.0.0.1' id='foo' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>");
-                        output.println("<stream:error><invalid-xml /></stream>");
-                        output.println("</stream:stream>");
-                    }*/
 
-                    // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
-                    // dla różnych głupich pomysłów
-                }
-                catch (Exception ex)
+                if (!cltext.startsWith("<?xml") && !cltext.equals(""))
                 {
-                    // ojej, klient wysłał nam coś, czego nie powinien był
-                    System.out.println("Błąd: błąd parsowania XML od klienta");
-                    parent.sendToClient(StreamError.invalidXML());
+
+                    cltext = cltext + "</stream:stream>";
+
+                    InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                    try
+                    {
+                        xmldoc = parser.parse(xmlis);
+                        /*if (xmldoc.getElementsByTagName("stream:stream").item(0).getNodeName() == null)
+                        {
+                            output.println("<?xml version='1.0'?><stream:stream from='127.0.0.1' id='foo' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>");
+                            output.println("<stream:error><invalid-xml /></stream>");
+                            output.println("</stream:stream>");
+                        }*/
+
+                        // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
+                        // dla różnych głupich pomysłów
+
+                        parent.sendToClient(StreamError.internalServerError());
+                    }
+                    catch (Exception ex)
+                    {
+                        // ojej, klient wysłał nam coś, czego nie powinien był
+                        System.out.println("Błąd: błąd parsowania XML od klienta");
+                        parent.sendImmediately(StreamError.invalidXML());
+
+                        this.stopWorking();
+                        parent.stopWorking();
+                    }
                 }
             }
             catch (Exception ex)
-            {
+            {                
                 System.out.println("Błąd: " + ex.getLocalizedMessage());
-                IgernaServer.stop();
+                this.stopWorking();
+                parent.stopWorking();
             }
         }
     }
