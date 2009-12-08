@@ -167,7 +167,7 @@ public class IgernaServer
 
                 // dodawanie nowego wątku klasy Worker do puli i uruchamianie go
                 workerPool.add(new Worker(clientSocket));
-                new Thread(workerPool.get(workerPool.size() -1)).start();
+                workerPool.get(workerPool.size() -1).start();
             }
         }
     }

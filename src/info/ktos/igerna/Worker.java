@@ -23,44 +23,42 @@ package info.ktos.igerna;
 
 import java.io.*;
 import java.net.Socket;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
+
 
 /**
  * Klasa-wątek, główna klasa odpowiedzialna za komunikację z klientem
  */
-class Worker implements Runnable
+class Worker extends Thread
 {
     private Socket clientSocket;
-    private Document xmldoc;
-    private DocumentBuilder parser;
-    private BufferedReader input;
+    public JID clientJID;
+    private XMPPStreamReader xsr;
+    private MessageBuffer mbuf;
+
     private PrintWriter output;
     protected boolean stopped = false;
 
     private String stream;
 
-    public void stop()
+    public void stopWorking()
     {
         stopped = true;
     }
 
     public Worker(Socket clientSocket)
     {
+        super();
         this.clientSocket = clientSocket;
+        this.mbuf = new MessageBuffer();
 
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try
         {
-            // tworzenie parsera XML
-            parser = dbf.newDocumentBuilder();            
-
             // tworzenie strumieni wejścia i wyjścia
             InputStream is = clientSocket.getInputStream();
             OutputStream os = clientSocket.getOutputStream();
 
-            input = new BufferedReader(new InputStreamReader(is));
+            // tworzenie readerów i writerów opartych na tych strumieniach
+            xsr = new XMPPStreamReader(new BufferedReader(new InputStreamReader(is)), this);
             output = new PrintWriter(os, true);
         }
         catch (Exception ex)
@@ -69,61 +67,29 @@ class Worker implements Runnable
             IgernaServer.stop();
         }
 
+        this.stopWorking();
         System.out.println("Debug: tworzenie wątku");
     }
 
+    @Override
     public void run()
     {
         try
         {
-            String cltext;
+            xsr.start();
             while (!stopped)
             {
-                cltext = input.readLine();                
-                
-                // oczekiwanie na początek strumienia
-                if (cltext.equals("<?xml version=\"1.0\"?>"))
+                /* sprawdzaj okresowo bufor, jeśli jest coś w buforze do wysłania, to wyślij
+                   do klienta */
+
+                if (!mbuf.isClean())
                 {
-
+                    output.println(mbuf.getBuffer());
+                    mbuf.clearBuffer();
                 }
-                else
-                {                    
-                    stream = "<?xml version='1.0'?>" + cltext + "</stream:stream>";
-                    InputStream xmlis = new ByteArrayInputStream(stream.getBytes());
-                    try
-                    {
-                        xmldoc = parser.parse(xmlis);
-                        /*if (xmldoc.getElementsByTagName("stream:stream").item(0).getNodeName() == null)
-                        {
-                            output.println("<?xml version='1.0'?><stream:stream from='127.0.0.1' id='foo' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>");
-                            output.println("<stream:error><invalid-xml /></stream>");
-                            output.println("</stream:stream>");
-                        }*/
 
-                        /*String version = xmldoc.getElementsByTagName("stream:stream").item(0).getAttributes().getNamedItem("version").getNodeValue();
-                        if (version.equals("1.0"))
-                        {*/
-
-                            String ot =
-                                "<?xml version=\"1.0\"?><stream:stream from=\"127.0.0.1\" id=\"foo\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">"
-                                + "<stream:error><internal-server-error /></stream:error>"
-                                + "</stream:stream>";
-                            
-                            output.println(ot);
-                        //}
-
-                            stop();
-
-                    }
-                    catch (Exception ex)
-                    {
-                        /*output.println("<?xml version='1.0'?><stream:stream from='127.0.0.1' id='foo' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>");
-                        output.println("<stream:error><invalid-xml /></stream:error>");
-                        output.println("</stream:stream>");*/
-                        stop();
-                    }                    
-
-                }                
+                Thread.sleep(200);
+                Thread.yield();
             }
 
             clientSocket.close();
@@ -135,6 +101,11 @@ class Worker implements Runnable
             IgernaServer.stop();
             System.exit(1);
         }
+    }
+
+    public void sendToClient(String xml)
+    {
+        mbuf.addToBuffer(xml);
     }
 
 }
