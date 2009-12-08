@@ -109,8 +109,12 @@ class XMPPStreamReader extends Thread
                 }
             }
             catch (Exception ex)
-            {                
-                System.out.println("Błąd: " + ex.getLocalizedMessage());
+            {
+                if (ex.getLocalizedMessage() != null)
+                    System.out.println("Błąd: " + ex.getLocalizedMessage());
+                else
+                    System.out.println("Debug: klient rozłączony");
+                
                 this.stopWorking();
                 parent.stopWorking();
             }
