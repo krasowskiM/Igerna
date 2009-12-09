@@ -21,25 +21,49 @@
  */
 package info.ktos.igerna.xmpp;
 
-import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
+import org.w3c.dom.Node;
 
 /**
  * Klasa reprezentująca wiadomości typu Iq
  */
 public class Iq extends Stanza
 {
-    public Iq(String xml) throws ParserConfigurationException, IOException, SAXException
+    protected String children = "";
+
+    public Iq(Node n)
     {
-        super(xml);
+        super(n);
     }
-    
+
+    public Iq(String to, String from, String id, String type, String lang, String children)
+    {
+        super(to, from, id, type, lang);
+        this.children = children;
+    }
+
+    public Iq(String from, String id, String type)
+    {
+        super("", from, id, type, "");
+    }
 
     @Override
-    public String toXML() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public String toString()
+    {
+        String result = "<iq type='" + this.type + "' id='" + this.id + "'";
+
+        if (!from.equals("")) result += " from='" + this.from + "'";
+        if (!lang.equals("")) result += " xml:lang='" + this.lang + "'";
+
+        if (!children.equals(""))
+            result += ">" + this.children + "</iq>";
+        else
+            result += "/>";
+
+        return result;
     }
+
+    // TODO: przenieśc te funkcje do specjalnej klasy IqFactory tworzącej tego typu
+    // obiekty Iq odpowiadające za różne odpowiedzi serwera
 
     public static String BindResult(String id, String jid)
     {
@@ -48,7 +72,7 @@ public class Iq extends Stanza
 
     public static String GoodResult(String id, String from)
     {
-        return String.format("<iq type='result' id='%1s' from='%2s'/>", id, from);
+        return String.format("<iq type='result' id='%s' from='%s'/>", id, from);
     }
 
     public static String ServiceUnavaliableError(String id)

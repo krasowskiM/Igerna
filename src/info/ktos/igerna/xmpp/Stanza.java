@@ -1,14 +1,6 @@
 package info.ktos.igerna.xmpp;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import org.w3c.dom.*;
 
 /**
  * Klasa abstrakcyjna reprezentująca poszczególne "stanza" protokołu XMPP
@@ -16,30 +8,49 @@ import org.xml.sax.SAXException;
 public abstract class Stanza
 {
     protected String xml;
-    protected DocumentBuilder parser;
-    protected BufferedReader input;
-    protected Document xmldoc;
+    protected Node xmlnode;
 
-    public JID from;
-    public JID to;
+    public String from;
+    public String to;
     public String id;
     public String type;
     public String lang;
 
-    public Stanza(String xml) throws ParserConfigurationException, IOException, SAXException
+    public Stanza(Node n)
     {
-        this.xml = xml;
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        // tworzenie parsera XML
-        parser = dbf.newDocumentBuilder();
-        InputStream xmlis = new ByteArrayInputStream(xml.getBytes());
-        xmldoc = parser.parse(xmlis);
-    }
-    
-    public abstract String toXML();
+        this.xmlnode = n;
+        this.xml = n.getTextContent();
+        // TODO: parsowanie XML i przepisywanie odpowiednich własności
 
-    public String getRawData()
+        NamedNodeMap att = n.getAttributes();
+        if (att.getNamedItem("id") != null) this.id = att.getNamedItem("id").getNodeValue(); else this.id = "";
+        if (att.getNamedItem("from") != null) this.from = att.getNamedItem("from").getNodeValue(); else this.from = "";
+        if (att.getNamedItem("to") != null) this.to = att.getNamedItem("to").getNodeValue(); else this.to = "";
+        if (att.getNamedItem("type") != null) this.type = att.getNamedItem("type").getNodeValue(); else this.type = "";
+        if (att.getNamedItem("xml:lang") != null) this.lang = att.getNamedItem("xml:lang").getNodeValue(); else this.lang = "";
+    }
+
+    public NodeList getChildItems()
     {
-        return this.xml;
+        return xmlnode.getChildNodes();
+    }
+
+    public Node getAsNode()
+    {
+        return xmlnode;
+    }
+
+    public Stanza()
+    {
+        
+    }
+
+    public Stanza(String to, String from, String id, String type, String lang)
+    {
+        this.to = to;
+        this.from = from;
+        this.id = id;
+        this.type = type;
+        this.lang = lang;
     }
 }

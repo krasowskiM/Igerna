@@ -21,7 +21,6 @@
  */
 package info.ktos.igerna;
 
-import info.ktos.igerna.xmpp.JID;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -29,8 +28,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import info.ktos.igerna.xmpp.*;
 
-import info.ktos.igerna.xmpp.Stanza;
+import javax.xml.parsers.*;
+import org.w3c.dom.*;
 
 public class IgernaServer
 {    
@@ -193,6 +194,9 @@ public class IgernaServer
      */
     private static void showVersion()
     {
+        Test();
+        System.exit(0);
+        
         System.out.println("Igerna version 0.1.0.0");
 	System.out.println("");
         System.out.println("Copyright (C) Marcin Badurowicz 2009");
@@ -223,18 +227,40 @@ public class IgernaServer
     /**
      * Wysyłanie wiadomości do danego podłączonego klienta
      */
-    public static void sendMessage(JID recipient, Stanza st)
+    public static boolean sendMessage(JID recipient, Stanza st)
     {
         // iterowanie po poszczególnych wątkach roboczych
         for (Worker w : workerPool)
         {
+            // jeśli klient jest podłączony i aktywny
             if (w.clientState.getState() == ClientState.ACTIVE)
             {
+                // jeśli jego JID odpowiada JIDowi odbiorcy
                 if (w.clientJID.equals(recipient))
                 {
-                    w.sendToClient(st.toXML());
+                    w.sendToClient(st.toString());
+                    return true;
                 }
             }
+        }
+        return false;
+    }
+
+    private static void Test()
+    {
+        try {
+            String n = "";
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder parser = dbf.newDocumentBuilder();
+            Document xmldoc = parser.parse("test.xml");
+
+            Iq i = new Iq(xmldoc.getElementsByTagName("iq").item(0));
+            System.out.println(i.getAsNode().toString());
+
+            xmldoc = null;
+            parser.reset();
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 }
