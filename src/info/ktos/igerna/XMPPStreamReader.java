@@ -85,17 +85,18 @@ class XMPPStreamReader extends Thread
                     try
                     {
                         xmldoc = parser.parse(xmlis);
-                        /*if (xmldoc.getElementsByTagName("stream:stream").item(0).getNodeName() == null)
+
+                        // jeśli stan klienta jest jakikolwiek byle nie "rozłączony",
+                        // i klient coś do nas wyśle, to my parsujemy żądanie
+                        // i wysyłamy odpowiedź
+                        if (parent.clientState.getState() >= ClientState.CONNECTED)
                         {
-                            output.println("<?xml version='1.0'?><stream:stream from='127.0.0.1' id='foo' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>");
-                            output.println("<stream:error><invalid-xml /></stream>");
-                            output.println("</stream:stream>");
-                        }*/
 
-                        // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
-                        // dla różnych głupich pomysłów
+                            // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
+                            // dla różnych głupich pomysłów
 
-                        parent.sendToClient(StreamError.internalServerError());
+                            parent.sendToClient(StreamError.internalServerError());
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -110,6 +111,7 @@ class XMPPStreamReader extends Thread
             }
             catch (Exception ex)
             {
+                // dirty hack, trzeba by to było poprawić pewnie
                 if (ex.getLocalizedMessage() != null)
                     System.out.println("Błąd: " + ex.getLocalizedMessage());
                 else

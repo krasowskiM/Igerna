@@ -21,6 +21,7 @@
  */
 package info.ktos.igerna;
 
+import info.ktos.igerna.xmpp.JID;
 import java.io.*;
 import java.net.Socket;
 
@@ -30,15 +31,16 @@ import java.net.Socket;
  */
 class Worker extends Thread
 {
-    private Socket clientSocket;
-    public JID clientJID;
+    private Socket clientSocket;    
     private XMPPStreamReader xsr;
     private MessageBuffer mbuf;
-
     private PrintWriter output;
+    private String stream;
+
     protected boolean stopped = false;
 
-    private String stream;
+    public JID clientJID;
+    public ClientState clientState;
 
     public void stopWorking()
     {
@@ -50,6 +52,13 @@ class Worker extends Thread
         super();
         this.clientSocket = clientSocket;
         this.mbuf = new MessageBuffer();
+
+        // status podłączonego klienta
+        // skoro już tworzony jest ten wątek, znaczy, że klient się podłączył
+        this.clientState = new ClientState();
+        this.clientState.setState(ClientState.CONNECTED);
+
+        this.clientJID = null;
 
         try
         {
@@ -87,7 +96,7 @@ class Worker extends Thread
                     mbuf.clearBuffer();
                 }
 
-                //Thread.sleep(500);
+                Thread.sleep(500);
                 //System.out.println("Debug: Czytam bufor...");
                 Thread.yield();
             }
@@ -100,7 +109,7 @@ class Worker extends Thread
         }
         catch (Exception ex)
         {
-            System.out.println("Błąd: " + ex.getLocalizedMessage());
+            System.out.println("Krytyczny błąd: " + ex.getLocalizedMessage());
             IgernaServer.stop();
             System.exit(1);
         }

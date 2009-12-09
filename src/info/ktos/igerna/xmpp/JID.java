@@ -19,12 +19,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Igerna.  If not, see <http://www.gnu.org/licenses/>.
  */
-package info.ktos.igerna;
+package info.ktos.igerna.xmpp;
 
 /**
  * Klasa będąca reprezentacją tzw. JabberID
  */
-class JID
+public class JID
 {
     private String userName;
     private String server;
@@ -42,5 +42,25 @@ class JID
     {
         return String.format("%1s@%2s/%3s", this.userName, this.server,
                 this.resource);
+    }
+
+
+    @Override
+    public boolean equals(Object j)
+    {
+        if (j.getClass() == this.getClass())
+            return this.hashCode() == j.hashCode();
+        else
+            return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int hash = 5;
+        hash = 83 * hash + (this.userName != null ? this.userName.hashCode() : 0);
+        hash = 83 * hash + (this.server != null ? this.server.hashCode() : 0);
+        hash = 83 * hash + (this.resource != null ? this.resource.hashCode() : 0);
+        return hash;
     }
 }

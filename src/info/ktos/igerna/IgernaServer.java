@@ -21,6 +21,7 @@
  */
 package info.ktos.igerna;
 
+import info.ktos.igerna.xmpp.JID;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,7 +29,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
-import java.util.List;
+
+import info.ktos.igerna.xmpp.Stanza;
 
 public class IgernaServer
 {    
@@ -36,8 +38,7 @@ public class IgernaServer
     private static String configFile = "igerna.conf";
     private static ServerSocket serv;
     private static boolean stopped;
-    private static List<Worker> workerPool;
-
+    private static ArrayList<Worker> workerPool;
     private static String bindHost;
     private static int bindPort;
 
@@ -202,5 +203,23 @@ public class IgernaServer
         System.out.println("  -C <plik> - ładuje konfigurację z podanego pliku, domyślnie");
         System.out.println("              jest to plik igerna.conf");
         System.out.println("");
+    }
+
+    /**
+     * Wysyłanie wiadomości do danego podłączonego klienta
+     */
+    public static void sendMessage(JID recipient, Stanza st)
+    {
+        // iterowanie po poszczególnych wątkach roboczych
+        for (Worker w : workerPool)
+        {
+            if (w.clientState.getState() == ClientState.ACTIVE)
+            {
+                if (w.clientJID.equals(recipient))
+                {
+                    w.sendToClient(st.toXML());
+                }
+            }
+        }
     }
 }
