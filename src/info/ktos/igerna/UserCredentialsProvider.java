@@ -29,6 +29,6 @@ public class UserCredentialsProvider
     public boolean check(String mechanism, String data)
     {
         // zaślepka
-        return false;
+        return true;
     }
 }

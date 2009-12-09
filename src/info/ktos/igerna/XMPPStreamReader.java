@@ -128,20 +128,31 @@ class XMPPStreamReader extends Thread
                             if (mechanism != null)
                                 if (IgernaServer.ucp.check(mechanism.getNodeValue(), xmldoc.getElementsByTagName("auth").item(0).getNodeValue()))
                                 {
-                                    // logowanie się powiodło, wyślij roster
+                                    // logowanie się powiodło, wyślij <success/>
+                                    // idziemy do następnego stanu
+                                    // w jakim klient może być
+                                    parent.sendToClient(Stream.SASLsuccess());
                                     parent.clientState.setState(ClientState.BINDING);
                                 }
                                 else
                                 {
+                                    // tutaj powinny być wyjątki i w zależności od
+                                    // wyjątku różne rodzaje błędów SASL
                                     parent.sendImmediately(StreamError.SASLnotauthorized());
                                 }
 
                             xmldoc = null;
                             xmlis.close();
                         }
+                        else if (parent.clientState.getState() == ClientState.BINDING)
+                        {
+                            // tutaj klient wysyła drugiego <stream>, na którego będziemy
+                            // odpowiadać naszym drugiem streamem
+                            parent.sendToClient(StreamError.internalServerError());
+                        }
                         // jeśli klient jest aktywny i coś wysyła, to my parsujemy żądanie
                         // i robimy co trzeba
-                        else if (parent.clientState.getState() > ClientState.AUTHORIZING)
+                        else if (parent.clientState.getState() == ClientState.ACTIVE)
                         {                            
                             // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
                             // dla różnych głupich pomysłów

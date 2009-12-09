@@ -67,5 +67,10 @@ public class Stream
                 "</stream:features>", m);
 
     }
+
+    public static String SASLsuccess()
+    {
+        return "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>";
+    }
     
 }
