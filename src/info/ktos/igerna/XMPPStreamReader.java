@@ -21,6 +21,7 @@
  */
 package info.ktos.igerna;
 
+import info.ktos.igerna.xmpp.Stream;
 import info.ktos.igerna.xmpp.StreamError;
 import java.io.*;
 import javax.xml.parsers.DocumentBuilder;
@@ -86,10 +87,20 @@ class XMPPStreamReader extends Thread
                     {
                         xmldoc = parser.parse(xmlis);
 
+                        if (parent.clientState.getState() == ClientState.CONNECTING)
+                        {
+                            // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
+                            // zatem odpowiadamy naszym streamem oraz SASLem
+
+                            // TODO: sprawdzanie wersji!
+                            parent.clientState.setState(ClientState.AUTHORIZING);
+                            parent.sendToClient(Stream.start(IgernaServer.getBindHost(), Stream.streamId()));
+                            parent.sendToClient(Stream.SASLfeatures(IgernaServer.getSASLMechanisms()));
+                        }
                         // jeśli stan klienta jest jakikolwiek byle nie "rozłączony",
                         // i klient coś do nas wyśle, to my parsujemy żądanie
                         // i wysyłamy odpowiedź
-                        if (parent.clientState.getState() >= ClientState.CONNECTED)
+                        else if (parent.clientState.getState() > ClientState.CONNECTING)
                         {
 
                             // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane

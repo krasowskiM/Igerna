@@ -52,6 +52,11 @@ public class IgernaServer
         return bindPort;
     }
 
+    public static String[] getSASLMechanisms()
+    {
+        return config.getArrayEntry("server", "sasl", new String[] { "PLAIN" });
+    }
+
     /**
      * Sprawdza czy serwer nie jest zatrzymany
      * @return

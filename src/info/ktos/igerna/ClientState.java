@@ -27,9 +27,9 @@ package info.ktos.igerna;
 class ClientState
 {
     public static final int DISCONNECTED = 0;
-    public static final int CONNECTED = 1;
-    public static final int AUTHORIZED = 2;
-    public static final int BOUND = 3;
+    public static final int CONNECTING = 1;
+    public static final int AUTHORIZING = 2;
+    public static final int BINDING = 3;
     public static final int ACTIVE = 4;
 
     private int state = 0;

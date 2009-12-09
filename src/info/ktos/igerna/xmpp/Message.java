@@ -22,7 +22,7 @@
 package info.ktos.igerna.xmpp;
 
 /**
- * Klasa implementjąca stanzę "Message"
+ * Klasa implementująca stanzę "Message"
  */
 public class Message extends Stanza
 {    
@@ -30,14 +30,13 @@ public class Message extends Stanza
 
     public Message(String xml)
     {
-        super(xml);
-        this.xml = xml;
+        super(xml);        
     }
 
     @Override
     public String toXML()
     {
-        return xml;
+        return this.getRawData();
     }
 
 }

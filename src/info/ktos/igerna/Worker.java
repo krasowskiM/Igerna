@@ -56,7 +56,7 @@ class Worker extends Thread
         // status podłączonego klienta
         // skoro już tworzony jest ten wątek, znaczy, że klient się podłączył
         this.clientState = new ClientState();
-        this.clientState.setState(ClientState.CONNECTED);
+        this.clientState.setState(ClientState.CONNECTING);
 
         this.clientJID = null;
 

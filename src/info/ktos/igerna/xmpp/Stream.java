@@ -52,4 +52,20 @@ public class Stream
         return "igerna" + r.nextInt();
     }
 
+    public static String SASLfeatures(String[] mechanisms)
+    {
+        String m = "";
+        for (String s : mechanisms)
+        {
+            m += String.format("<mechanism>%1s</mechanism>", s);
+        }
+
+        return String.format("<stream:features>" +
+                "<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>" +
+                "%1s" +
+                "</mechanisms>" +
+                "</stream:features>", m);
+
+    }
+    
 }

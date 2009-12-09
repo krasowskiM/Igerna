@@ -15,8 +15,13 @@ public abstract class Stanza
 
     public Stanza(String xml)
     {
-
+        this.xml = xml;
     }
     
     public abstract String toXML();
+
+    public String getRawData()
+    {
+        return this.xml;
+    }
 }
