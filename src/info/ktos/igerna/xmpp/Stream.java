@@ -75,7 +75,10 @@ public class Stream
 
     public static String features()
     {
-        return "<stream:features><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/></stream:features>";
+        return "<stream:features>" + 
+                "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>" +
+                "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
+                "</stream:features>";
     }
     
 }

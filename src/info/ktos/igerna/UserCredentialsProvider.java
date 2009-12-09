@@ -26,9 +26,30 @@ package info.ktos.igerna;
  */
 public class UserCredentialsProvider
 {
+    private String username;
+    private String password;
+
+
     public boolean check(String mechanism, String data)
     {
-        // zaślepka
-        return true;
+        if (mechanism.equals("PLAIN"))
+        {
+            String d = new String(util.Base64.decodeFast(data));            
+
+            String[] e = d.split("\0");            
+            username = e[1];
+            password = e[2];
+
+            return (username.equals("ktos") && password.equals("sim"));
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public String lastUsername()
+    {
+        return this.username;
     }
 }

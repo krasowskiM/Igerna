@@ -29,8 +29,10 @@ class ClientState
     public static final int DISCONNECTED = 0;
     public static final int CONNECTING = 1;
     public static final int AUTHORIZING = 2;
-    public static final int BINDING = 3;
-    public static final int ACTIVE = 4;
+    public static final int AUTHORIZED = 3;
+    public static final int BINDING = 4;
+    public static final int BOUND = 5;
+    public static final int ACTIVE = 6;
 
     private int state = 0;
 

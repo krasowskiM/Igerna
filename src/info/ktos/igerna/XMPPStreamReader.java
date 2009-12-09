@@ -21,8 +21,7 @@
  */
 package info.ktos.igerna;
 
-import info.ktos.igerna.xmpp.Stream;
-import info.ktos.igerna.xmpp.StreamError;
+import info.ktos.igerna.xmpp.*;
 import java.io.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -137,54 +136,140 @@ class XMPPStreamReader extends Thread
                             // wyszukiwanie mechanizmu uwierzytelnienia
                             Node mechanism = xmldoc.getElementsByTagName("auth").item(0).getAttributes().getNamedItem("mechanism");
                             if (mechanism != null)
-                                if (IgernaServer.ucp.check(mechanism.getNodeValue(), xmldoc.getElementsByTagName("auth").item(0).getNodeValue()))
+                                if (IgernaServer.ucp.check(mechanism.getNodeValue(), xmldoc.getElementsByTagName("auth").item(0).getTextContent()))
                                 {
                                     // logowanie się powiodło, wyślij <success/>
-                                    // idziemy do następnego stanu
-                                    // w jakim klient może być
                                     parent.sendToClient(Stream.SASLsuccess());
-                                    parent.clientState.setState(ClientState.BINDING);
+                                    
+                                    parent.clientJID = new JID(IgernaServer.ucp.lastUsername(), IgernaServer.getBindHost(), "");
+
+                                    // idziemy do następnego stanu
+                                    parent.clientState.setState(ClientState.AUTHORIZED);
                                 }
                                 else
                                 {
                                     // tutaj powinny być wyjątki i w zależności od
                                     // wyjątku różne rodzaje błędów SASL
                                     parent.sendImmediately(StreamError.SASLnotauthorized());
+
+                                    // i rozłączamy się
+                                    this.stopWorking();
+                                    parent.stopWorking();
                                 }
 
                             xmldoc = null;
                             xmlis.close();
                         }
-                        else if (parent.clientState.getState() == ClientState.BINDING)
+                        else if (parent.clientState.getState() == ClientState.AUTHORIZED)
                         {
                             // tutaj klient wysyła drugiego <stream>, na którego będziemy
-                            // odpowiadać naszym drugiem streamem
-                            //parent.sendToClient(StreamError.internalServerError());
+                            // odpowiadać naszym drugiem streamem :-)
                             
                             parent.sendToClient(serverStreamStart);
                             parent.sendToClient(Stream.features());
 
-                            //parent.sendImmediately("<?xml version='1.0'?><stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' id='2616855952' from='127.0.0.1' version='1.0' xml:lang='en'>");
-/*"<stream:features><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>" +
-"<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></stream:features>");*/
-
-                            parent.clientState.setState(ClientState.ACTIVE);
+                            // powiodło się? no to klient pewnie się będzie bindował do zasobu
+                            parent.clientState.setState(ClientState.BINDING);
                         }
-                        // jeśli klient jest aktywny i coś wysyła, to my parsujemy żądanie
+                        // klient się binduje do zasobu
+                        else if (parent.clientState.getState() == ClientState.BINDING)
+                        {
+                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                            xmldoc = parser.parse(xmlis);
+                            
+                            if (xmldoc.getElementsByTagName("iq").getLength() == 1)
+                            {
+                                String bindid = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
+
+                                // ustalanie nowego zasobu
+                                // TODO: powinno być brane z XML, a nie generowane przez serwer
+                                String newres = "foo";
+                                parent.clientJID.setResource(newres);
+
+                                // wysyłanie do klienta potwierdzenia
+                                parent.sendToClient(Iq.BindResult(bindid, parent.clientJID.toString()));
+
+                                parent.clientState.setState(ClientState.BOUND);
+                            }
+                            else
+                            {
+                                // błąd wewnętrzny jeśli klient zechciał coś innnego niż
+                                // binding do zasobu
+                                parent.sendToClient(StreamError.internalServerError2());
+                            }
+
+                            xmldoc = null;
+                            xmlis.close();                            
+                        }
+                        // klient się podłączył do zasobu, będzie chciał ustanowić sesję
+                        else if (parent.clientState.getState() == ClientState.BOUND)
+                        {
+                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                            xmldoc = parser.parse(xmlis);
+
+                            if (xmldoc.getElementsByTagName("iq").getLength() == 1)
+                            {
+                                String id = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
+
+                                // wysyłanie do klienta potwierdzenia
+                                parent.sendToClient(Iq.GoodResult(id, IgernaServer.getBindHost()));
+
+                                parent.clientState.setState(ClientState.ACTIVE);
+                            }
+                            else
+                            {
+                                // błąd wewnętrzny jeśli klient zechciał coś innnego niż
+                                // sesja ;-)
+                                parent.sendToClient(StreamError.internalServerError2());
+                            }
+
+                            xmldoc = null;
+                            xmlis.close();
+                        }
+                        // a jeśli klient jest aktywny i coś wysyła, to my parsujemy żądanie
                         // i robimy co trzeba
                         else if (parent.clientState.getState() == ClientState.ACTIVE)
-                        {                            
-                            // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
+                        {
+                            cltext = clientStreamStart + cltext + Stream.end();
+
+                            // TODO: tutaj rozpoznawanie tagów i odpowiednie akcje podejmowane
                             // dla różnych głupich pomysłów
 
-                            // tymczasowo: wysyłamy wewnętrzny błąd w wersji "w trakcie"
-                            // ustanawiania streamu
-                            parent.sendToClient(StreamError.internalServerError2());
+                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                            xmldoc = parser.parse(xmlis);
+
+                            if (xmldoc.getElementsByTagName("iq").getLength() > 0)
+                            {
+                                for (int i = 0; i < xmldoc.getElementsByTagName("iq").getLength(); i++)
+                                {
+                                    Node main = xmldoc.getElementsByTagName("iq").item(i);
+
+                                    // klient wysłał stanzę <iq>
+                                    String id = main.getAttributes().getNamedItem("id").getTextContent();
+                                    parent.sendToClient(Iq.ServiceUnavaliableError(id));
+                                }
+                            }
+                            else if (xmldoc.getElementsByTagName("presence").getLength() > 0)
+                            {
+                                // klient wysłał stanzę <presence>
+                            }
+                            else if (xmldoc.getElementsByTagName("message").getLength() > 0)
+                            {
+                                // klient wysłał stanzę <message>
+                            }
+                            else
+                            {
+                                parent.sendImmediately(StreamError.internalServerError2());
+                                this.stopWorking();
+                                parent.stopWorking();
+                            }
                         }
                         
                     }
                     catch (Exception ex)
                     {
+                        //System.out.println("Błąd: " + ex.getMessage());
+                        //ex.printStackTrace();
                         // ojej, klient wysłał nam coś, czego nie powinien był
                         System.out.println("Błąd: błąd parsowania XML od klienta");
                         parent.sendImmediately(StreamError.invalidXML());

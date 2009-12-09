@@ -37,6 +37,11 @@ public class JID
         this.resource = res;
     }
 
+    public void setResource(String newres)
+    {
+        this.resource = newres;
+    }
+
     @Override
     public String toString()
     {
