@@ -42,6 +42,8 @@ public class IgernaServer
     private static String bindHost;
     private static int bindPort;
 
+    public static UserCredentialsProvider ucp;
+
     public static String getBindHost()
     {
         return bindHost;
@@ -130,7 +132,6 @@ public class IgernaServer
             try
             {
                 // odczyt hosta i portu do którego mam zbindować socket                                
-
                 bindPort = Integer.parseInt(config.getStringEntry("bind", "port", "5222"));
                 bindHost = config.getStringEntry("bind", "host", "localhost");
                 // podłączanie gniazda
@@ -147,7 +148,16 @@ public class IgernaServer
             {
                 System.out.println("Błąd: podano niepoprawny port do zbindowania");
                 stop();
-            }            
+            }
+
+            try
+            {
+                ucp = new UserCredentialsProvider();
+            }
+            catch (Exception ex)
+            {
+                System.out.println("Błąd: nie mogę utworzyć providera danych użytkowników");
+            }
 
             // tworzenie "puli" moich wątków
             workerPool = new ArrayList<Worker>();

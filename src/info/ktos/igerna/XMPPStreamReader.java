@@ -27,6 +27,7 @@ import java.io.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 /**
  * Klasa odpowiedzialna za odczytywanie z wejściowego strumienia XMPP
@@ -40,8 +41,9 @@ class XMPPStreamReader extends Thread
     private boolean stopped = false;
     private String cltext;
     private Worker parent;
-
     private char[] cbuf;
+    private String clientStreamStart;
+    private String serverStreamStart;
 
     public void stopWorking()
     {
@@ -78,8 +80,8 @@ class XMPPStreamReader extends Thread
             try
             {
                 // czyszczenie bufora i odczyt z niego
-                cbuf = null;
-                cbuf = new char[4096];
+                cbuf = null; cbuf = new char[4096];
+
                 int res = input.read(cbuf);
                 cltext = new String(cbuf).trim();
 
@@ -92,25 +94,60 @@ class XMPPStreamReader extends Thread
                     {                        
                         if (parent.clientState.getState() == ClientState.CONNECTING)
                         {
-                            cltext = cltext + "</stream:stream>";
+                            // uznajemy, że to co klient wysłał to prawdopodobnie będzie
+                            // początek strumienia
+                            clientStreamStart = cltext;
+
+                            cltext = cltext + Stream.end();
                             InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
                             xmldoc = parser.parse(xmlis);
+                            
+                            // TODO: sprawdzanie wersji!                            
+
+                            serverStreamStart = Stream.start(IgernaServer.getBindHost(), Stream.streamId());
+
                             // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
                             // zatem odpowiadamy naszym streamem oraz SASLem
-
-                            // TODO: sprawdzanie wersji!
-                            parent.clientState.setState(ClientState.AUTHORIZING);
-                            parent.sendToClient(Stream.start(IgernaServer.getBindHost(), Stream.streamId()));
+                            parent.sendToClient(serverStreamStart);
                             parent.sendToClient(Stream.SASLfeatures(IgernaServer.getSASLMechanisms()));
+
+                            // i ustawiamy, że najwyraźniej klient jest w trakcie autoryzacji
+                            parent.clientState.setState(ClientState.AUTHORIZING);
+
+                            xmldoc = null;
+                            xmlis.close();
                         }
-                        // jeśli stan klienta jest jakikolwiek byle nie "rozłączony",
-                        // i klient coś do nas wyśle, to my parsujemy żądanie
-                        // i wysyłamy odpowiedź
-                        else if (parent.clientState.getState() > ClientState.CONNECTING)
+                        // jeśli klient jest w trakcie autoryzacji, to czekamy na jego <auth>
+                        else if (parent.clientState.getState() == ClientState.AUTHORIZING)
+                        {
+                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                            xmldoc = parser.parse(xmlis);
+
+                            // wyszukiwanie mechanizmu uwierzytelnienia
+                            Node mechanism = xmldoc.getElementsByTagName("auth").item(0).getAttributes().getNamedItem("mechanism");
+                            if (mechanism != null)
+                                if (IgernaServer.ucp.check(mechanism.getNodeValue(), xmldoc.getElementsByTagName("auth").item(0).getNodeValue()))
+                                {
+                                    // logowanie się powiodło, wyślij roster
+                                    parent.clientState.setState(ClientState.BINDING);
+                                }
+                                else
+                                {
+                                    parent.sendImmediately(StreamError.SASLnotauthorized());
+                                }
+
+                            xmldoc = null;
+                            xmlis.close();
+                        }
+                        // jeśli klient jest aktywny i coś wysyła, to my parsujemy żądanie
+                        // i robimy co trzeba
+                        else if (parent.clientState.getState() > ClientState.AUTHORIZING)
                         {                            
                             // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
                             // dla różnych głupich pomysłów
 
+                            // tymczasowo: wysyłamy wewnętrzny błąd w wersji "w trakcie"
+                            // ustanawiania streamu
                             parent.sendToClient(StreamError.internalServerError2());
                         }
                         

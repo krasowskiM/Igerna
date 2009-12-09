@@ -60,4 +60,14 @@ public class StreamError
                 err,
                 Stream.end());
     }
+
+    private static String SASLerror(String err)
+    {
+        return String.format("<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>%1s</failure>%2s", err, Stream.end());
+    }
+
+    public static String SASLnotauthorized()
+    {
+        return SASLerror("<not-authorized/>");
+    }
 }
