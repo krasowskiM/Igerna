@@ -40,11 +40,23 @@ public class StreamError
         return err("<internal-server-error />");
     }
 
+    public static String internalServerError2()
+    {
+        return err2("<internal-server-error />");
+    }
+
     private static String err(String err)
     {
         return String.format("%s%s<stream:error>%s</stream:error>%s",
                 Stream.xmlPrologue(),
                 Stream.start(IgernaServer.getBindHost(), Stream.streamId()),
+                err,
+                Stream.end());
+    }
+
+    private static String err2(String err)
+    {
+        return String.format("<stream:error>%s</stream:error>%s",
                 err,
                 Stream.end());
     }

@@ -41,6 +41,8 @@ class XMPPStreamReader extends Thread
     private String cltext;
     private Worker parent;
 
+    private char[] cbuf;
+
     public void stopWorking()
     {
         this.stopped = true;
@@ -71,24 +73,28 @@ class XMPPStreamReader extends Thread
     @Override
     public void run()
     {
-        while (!stopped)
+        while (true)//!stopped)
         {
             try
-            {                
-                cltext = input.readLine();
+            {
+                // czyszczenie bufora i odczyt z niego
+                cbuf = null;
+                cbuf = new char[4096];
+                int res = input.read(cbuf);
+                cltext = new String(cbuf).trim();
 
-                if (!cltext.startsWith("<?xml") && !cltext.equals(""))
+                if ((res != -1) && (!cltext.equals("")))
                 {
-
-                    cltext = cltext + "</stream:stream>";
-
-                    InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                    
+                    System.out.println("Fr: " + cltext);
+                    
                     try
-                    {
-                        xmldoc = parser.parse(xmlis);
-
+                    {                        
                         if (parent.clientState.getState() == ClientState.CONNECTING)
                         {
+                            cltext = cltext + "</stream:stream>";
+                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+                            xmldoc = parser.parse(xmlis);
                             // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
                             // zatem odpowiadamy naszym streamem oraz SASLem
 
@@ -101,13 +107,13 @@ class XMPPStreamReader extends Thread
                         // i klient coś do nas wyśle, to my parsujemy żądanie
                         // i wysyłamy odpowiedź
                         else if (parent.clientState.getState() > ClientState.CONNECTING)
-                        {
-
+                        {                            
                             // TODO: tutaj rozpozwanie tagów i odpowiednie akcje podejmowane
                             // dla różnych głupich pomysłów
 
-                            parent.sendToClient(StreamError.internalServerError());
+                            parent.sendToClient(StreamError.internalServerError2());
                         }
+                        
                     }
                     catch (Exception ex)
                     {
