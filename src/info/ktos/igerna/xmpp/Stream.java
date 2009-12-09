@@ -72,5 +72,10 @@ public class Stream
     {
         return "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>";
     }
+
+    public static String features()
+    {
+        return "<stream:features><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/><session xmlns='urn:ietf:params:xml:ns:xmpp-session'/></stream:features>";
+    }
     
 }

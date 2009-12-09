@@ -85,7 +85,7 @@ class XMPPStreamReader extends Thread
                 int res = input.read(cbuf);
                 cltext = new String(cbuf).trim();
 
-                if ((res != -1) && (!cltext.equals("")))
+                if ((res != -1) && (!cltext.equals("")) && (!cltext.startsWith("<?xml")))
                 {
                     
                     System.out.println("Fr: " + cltext);
@@ -148,7 +148,10 @@ class XMPPStreamReader extends Thread
                         {
                             // tutaj klient wysyła drugiego <stream>, na którego będziemy
                             // odpowiadać naszym drugiem streamem
-                            parent.sendToClient(StreamError.internalServerError());
+                            //parent.sendToClient(StreamError.internalServerError());
+                            parent.sendToClient(Stream.xmlPrologue() + Stream.start(IgernaServer.getBindHost(), Stream.streamId()));
+                            parent.sendToClient(Stream.features());
+                            parent.clientState.setState(ClientState.ACTIVE);
                         }
                         // jeśli klient jest aktywny i coś wysyła, to my parsujemy żądanie
                         // i robimy co trzeba
@@ -178,7 +181,7 @@ class XMPPStreamReader extends Thread
             {
                 // dirty hack, trzeba by to było poprawić pewnie
                 if (ex.getLocalizedMessage() != null)
-                    System.out.println("Błąd: " + ex.getLocalizedMessage());
+                    System.out.println("Błąd1: " + ex.getLocalizedMessage());
                 else
                     System.out.println("Debug: klient rozłączony");
                 
