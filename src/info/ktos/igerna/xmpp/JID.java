@@ -30,6 +30,11 @@ public class JID
     private String server;
     private String resource;
 
+    public String getUserName()
+    {
+        return this.userName;
+    }
+
     public JID(String name, String serv, String res)
     {
         this.userName = name;
@@ -47,6 +52,11 @@ public class JID
     {
         return String.format("%1s@%2s/%3s", this.userName, this.server,
                 this.resource);
+    }
+
+    public String toStringWithoutResource()
+    {
+        return String.format("%1s@%2s", this.userName, this.server);
     }
 
 

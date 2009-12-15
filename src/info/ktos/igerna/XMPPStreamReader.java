@@ -95,10 +95,7 @@ class XMPPStreamReader extends Thread
                         // to kończymy pracę i wychodzimy z naszej nieskończonej pętli
                         if (cltext.equals(Stream.end()))
                         {
-                            this.stopWorking();                            
-                            parent.clientState.setState(ClientState.DISCONNECTED);
-                            parent.stopWorking();
-
+                            disconnectClient();
                             break;
                         }
 
@@ -246,16 +243,39 @@ class XMPPStreamReader extends Thread
 
                                     // klient wysłał stanzę <iq>
                                     String id = main.getAttributes().getNamedItem("id").getTextContent();
+                                    
+                                    // XEP-0054: vcard-tmp
+                                    
+
                                     parent.sendToClient(Iq.ServiceUnavaliableError(id));
                                 }
                             }
                             else if (xmldoc.getElementsByTagName("presence").getLength() > 0)
                             {
                                 // klient wysłał stanzę <presence>
+                                for (int i = 0; i < xmldoc.getElementsByTagName("presence").getLength(); i++)
+                                {
+                                    // hack na Psi, które jest brzydkie i nie wysyła </stream>
+                                    // jak się wyłącza, a tylko presence unavaliable
+
+                                    // jeżeli presence jest "unavaliable", to rozłącz klienta
+                                    Node item = xmldoc.getElementsByTagName("presence").item(i);
+                                    Node presType = item.getAttributes().getNamedItem("type");
+
+                                    if ((presType != null) && (presType.getNodeValue().equals("unavailable")))
+                                    {
+                                        disconnectClient();
+                                        break;
+                                    }
+
+                                    // w jakimkolwiek innym wypadku w zasadzie trzeba
+                                    // <presence> przekierować dalej
+                                }
                             }
                             else if (xmldoc.getElementsByTagName("message").getLength() > 0)
                             {
                                 // klient wysłał stanzę <message>
+                                parent.sendToClient("<message from=\"127.0.0.1\" id=\"123\" to=\"ktos@127.0.0.1/foo\"><body>Test!</body></message>");
                             }
                             else
                             {
@@ -266,13 +286,21 @@ class XMPPStreamReader extends Thread
                         }
                         
                     }
-                    catch (Exception ex)
+                    catch (org.xml.sax.SAXParseException ex)
                     {
-                        //System.out.println("Błąd: " + ex.getMessage());
-                        //ex.printStackTrace();
                         // ojej, klient wysłał nam coś, czego nie powinien był
                         System.out.println("Błąd: błąd parsowania XML od klienta");
                         parent.sendImmediately(StreamError.invalidXML());
+
+                        this.stopWorking();
+                        parent.stopWorking();
+                    }
+                    // jakiś inny błąd, na przykład nullpointerexception ;-)
+                    catch (Exception ex)
+                    {
+                        System.out.println("Błąd: " + ex.toString() + ": " + ex.getMessage());
+                        //ex.printStackTrace();
+                        parent.sendImmediately(StreamError.internalServerError2());
 
                         this.stopWorking();
                         parent.stopWorking();
@@ -291,5 +319,13 @@ class XMPPStreamReader extends Thread
                 parent.stopWorking();
             }
         }
+    }
+
+    private void disconnectClient()
+    {
+        this.stopWorking();
+        parent.clientState.setState(ClientState.DISCONNECTED);
+        parent.stopWorking();
+        return;
     }
 }
