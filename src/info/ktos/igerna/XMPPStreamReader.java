@@ -130,6 +130,10 @@ class XMPPStreamReader extends Thread
                             InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
                             xmldoc = parser.parse(xmlis);
 
+                            // TODO: błąd, jeśli klient nie wyśle tego, co trzeba
+                            // na przykład wyśle jabber:iq:auth bo nie obsługuje SASL
+                            // NullPointerException
+
                             // wyszukiwanie mechanizmu uwierzytelnienia
                             Node mechanism = xmldoc.getElementsByTagName("auth").item(0).getAttributes().getNamedItem("mechanism");
                             if (mechanism != null)
