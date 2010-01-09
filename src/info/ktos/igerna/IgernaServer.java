@@ -193,10 +193,7 @@ public class IgernaServer
      * Pokazywanie informacji o wersji i licencji
      */
     private static void showVersion()
-    {
-        Test();
-        System.exit(0);
-        
+    {      
         System.out.println("Igerna version 0.1.0.0");
 	System.out.println("");
         System.out.println("Copyright (C) Marcin Badurowicz 2009");

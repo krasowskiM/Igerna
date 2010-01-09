@@ -21,7 +21,11 @@
  */
 package info.ktos.igerna.xmpp;
 
-import org.w3c.dom.Node;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+
 
 /**
  * Klasa reprezentująca wiadomości typu Iq
@@ -35,20 +39,54 @@ public class Iq extends Stanza
         super(n);
     }
 
-    public Iq(String to, String from, String id, String type, String lang, String children)
+    public Iq(String to, String from, String id, String type, String lang, String children) throws SAXException, IOException
     {
-        super(to, from, id, type, lang);
-        this.children = children;
+        super(to, from, id, type, lang, children);
+
+        xmlnode = xmldoc.createElement("iq");
+        
+        if (!this.from.equals(""))
+            xmlnode.appendChild(createAttributeValue("from", this.from));
+
+        if (!this.to.equals(""))
+            xmlnode.appendChild(createAttributeValue("to", this.to));
+
+        if (!this.id.equals(""))
+            xmlnode.appendChild(createAttributeValue("id", this.id));
+
+        if (!this.type.equals(""))
+            xmlnode.appendChild(createAttributeValue("type", this.type));
+
+        if (!this.lang.equals(""))
+            xmlnode.appendChild(createAttributeValue("lang", this.lang));
+
+        // parsowanie dzieci i przepisywanie ich do xmlnode
+        if (!this.childXML.equals(""))
+        {
+            Document child = parser.parse(new ByteArrayInputStream(children.getBytes()));
+            for (int i = 0; i < child.getChildNodes().getLength(); i++)
+                xmlnode.appendChild(child.getChildNodes().item(i));
+        }
+
     }
 
-    public Iq(String from, String id, String type)
+    private Node createAttributeValue(String name, String value) throws DOMException
     {
-        super("", from, id, type, "");
+        Node nfrom = xmldoc.createAttribute(name);
+        nfrom.setTextContent(value);
+        return nfrom;
+    }
+
+    public Iq(String from, String id, String type) throws SAXException, IOException
+    {
+        this("", from, id, type, "", "");
     }
 
     @Override
     public String toString()
     {
+        // TODO: zmienić na rzeczywistą zamianę xml na stringa, outerXML
+        
         String result = "<iq type='" + this.type + "' id='" + this.id + "'";
 
         if (!from.equals("")) result += " from='" + this.from + "'";
@@ -62,9 +100,8 @@ public class Iq extends Stanza
         return result;
     }
 
-    // TODO: przenieśc te funkcje do specjalnej klasy IqFactory tworzącej tego typu
-    // obiekty Iq odpowiadające za różne odpowiedzi serwera
-
+    /// metody statyczne odpowiedzialne za tworzenie Iq będących różnymi
+    /// odpowiedziami serwera
     public static String BindResult(String id, String jid)
     {
         return String.format("<iq type='result' id='%1s'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><jid>%2s</jid></bind></iq>", id, jid);

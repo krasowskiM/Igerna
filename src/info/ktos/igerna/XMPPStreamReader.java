@@ -25,6 +25,7 @@ import info.ktos.igerna.xmpp.*;
 import java.io.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -238,55 +239,7 @@ class XMPPStreamReader extends Thread
 
                             InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
                             xmldoc = parser.parse(xmlis);
-
-                            if (xmldoc.getElementsByTagName("iq").getLength() > 0)
-                            {
-                                for (int i = 0; i < xmldoc.getElementsByTagName("iq").getLength(); i++)
-                                {
-                                    Node main = xmldoc.getElementsByTagName("iq").item(i);
-
-                                    // klient wysłał stanzę <iq>
-                                    String id = main.getAttributes().getNamedItem("id").getTextContent();
-                                    
-                                    // XEP-0054: vcard-tmp
-                                    
-
-                                    parent.sendToClient(Iq.ServiceUnavaliableError(id));
-                                }
-                            }
-                            else if (xmldoc.getElementsByTagName("presence").getLength() > 0)
-                            {
-                                // klient wysłał stanzę <presence>
-                                for (int i = 0; i < xmldoc.getElementsByTagName("presence").getLength(); i++)
-                                {
-                                    // hack na Psi, które jest brzydkie i nie wysyła </stream>
-                                    // jak się wyłącza, a tylko presence unavaliable
-
-                                    // jeżeli presence jest "unavaliable", to rozłącz klienta
-                                    Node item = xmldoc.getElementsByTagName("presence").item(i);
-                                    Node presType = item.getAttributes().getNamedItem("type");
-
-                                    if ((presType != null) && (presType.getNodeValue().equals("unavailable")))
-                                    {
-                                        disconnectClient();
-                                        break;
-                                    }
-
-                                    // w jakimkolwiek innym wypadku w zasadzie trzeba
-                                    // <presence> przekierować dalej
-                                }
-                            }
-                            else if (xmldoc.getElementsByTagName("message").getLength() > 0)
-                            {
-                                // klient wysłał stanzę <message>
-                                parent.sendToClient("<message from=\"127.0.0.1\" id=\"123\" to=\"ktos@127.0.0.1/foo\"><body>Test!</body></message>");
-                            }
-                            else
-                            {
-                                parent.sendImmediately(StreamError.internalServerError2());
-                                this.stopWorking();
-                                parent.stopWorking();
-                            }
+                            respondClient();
                         }
                         
                     }
@@ -325,11 +278,83 @@ class XMPPStreamReader extends Thread
         }
     }
 
+    /**
+     * Wysyłanie odpowiedzi do klienta na różne żądania
+     * @throws DOMException
+     */
+    private void respondClient() throws DOMException
+    {
+        if (xmldoc.getElementsByTagName("iq").getLength() > 0)
+        {
+            for (int i = 0; i < xmldoc.getElementsByTagName("iq").getLength(); i++)
+            {
+                Node main = xmldoc.getElementsByTagName("iq").item(i);
+                // klient wysłał stanzę <iq>
+                String id = XmlUtil.getAttributeAsString(main, "id");
+                String from = XmlUtil.getAttributeAsString(main, "from");
+                String to = XmlUtil.getAttributeAsString(main, "to");
+
+                // jeśli to zostało wysłane do serwera
+                if (to.equals(IgernaServer.getBindHost()))
+                {
+                    respondToIq(id, from, to);
+                }
+                else
+                {
+                    // przesyłamy dalej
+
+                }
+            }
+        }
+
+        if (xmldoc.getElementsByTagName("presence").getLength() > 0)
+        {
+            // klient wysłał stanzę <presence>
+            for (int i = 0; i < xmldoc.getElementsByTagName("presence").getLength(); i++)
+            {
+                // hack na Psi, które jest brzydkie i nie wysyła </stream>
+                // jak się wyłącza, a tylko presence unavaliable
+                // jeżeli presence jest "unavaliable", to rozłącz klienta
+                Node item = xmldoc.getElementsByTagName("presence").item(i);
+                Node presType = item.getAttributes().getNamedItem("type");
+                if ((presType != null) && (presType.getNodeValue().equals("unavailable")))
+                {
+                    disconnectClient();
+                    break;
+                }
+                // w jakimkolwiek innym wypadku w zasadzie trzeba
+                // <presence> przekierować dalej
+            }
+        }
+
+        if (xmldoc.getElementsByTagName("message").getLength() > 0)
+        {
+            // klient wysłał stanzę <message>
+            parent.sendToClient("<message from=\"127.0.0.1\" id=\"123\" to=\"ktos@127.0.0.1/foo\"><body>Test!</body></message>");
+        }
+
+        /*
+        else
+        {
+            parent.sendImmediately(StreamError.internalServerError2());
+            this.stopWorking();
+            parent.stopWorking();
+        }*/
+
+        // TODO: jeśli nierozpoznany XML, to co robimy?
+    }
+
     private void disconnectClient()
     {
         this.stopWorking();
         parent.clientState.setState(ClientState.DISCONNECTED);
         parent.stopWorking();
         return;
+    }
+
+    private void respondToIq(String id, String from, String to)
+    {
+        // XEP-0054: vcard-tmp
+        parent.sendToClient(Iq.ServiceUnavaliableError(id));
     }
 }
