@@ -101,6 +101,10 @@ public class IgernaServer
             {
                 IgernaServer.showHelp();
             }
+            else if (args[0].equals("--test"))
+            {
+                IgernaServer.Test();
+            }
             else if (args[0].startsWith("-C"))
             {
                 System.out.println("Not implemented");
@@ -351,5 +355,8 @@ public class IgernaServer
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }*/
+
+        
+        System.exit(0);
     }
 }
