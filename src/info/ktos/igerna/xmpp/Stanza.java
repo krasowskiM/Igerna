@@ -149,6 +149,9 @@ public abstract class Stanza
         return nfrom;
     }
 
-
-    
+    @Override
+    public String toString()
+    {
+        return XmlUtil.outerXml(xmlnode);
+    }
 }

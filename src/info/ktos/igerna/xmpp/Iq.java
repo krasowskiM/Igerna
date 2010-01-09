@@ -55,7 +55,7 @@ public class Iq extends Stanza
                 xmlnode.appendChild(createAttributeValue("type", this.type));
 
             if (!this.lang.equals(""))
-                xmlnode.appendChild(createAttributeValue("lang", this.lang));
+                xmlnode.appendChild(createAttributeValue("xml:lang", this.lang));
 
             // parsowanie dzieci i przepisywanie ich do xmlnode
             if (!this.childXML.equals(""))
@@ -77,44 +77,26 @@ public class Iq extends Stanza
         this("", from, id, type, "", "");
     }
 
-    @Override
-    public String toString()
-    {
-        // TODO: zmienić na rzeczywistą zamianę xml na stringa, outerXML
-        
-        String result = "<iq type='" + this.type + "' id='" + this.id + "'";
-
-        if (!from.equals("")) result += " from='" + this.from + "'";
-        if (!lang.equals("")) result += " xml:lang='" + this.lang + "'";
-
-        if (!childXML.equals(""))
-            result += ">" + this.childXML + "</iq>";
-        else
-            result += "/>";
-
-        return result;
-    }
-
     /// metody statyczne odpowiedzialne za tworzenie Iq będących różnymi
     /// odpowiedziami serwera
     // TODO: przenieść do czegoś w rodzaju IqFactory oraz zmienić na tworzenie obiektów
     // a nie na zwracanie stringów
-    public static String BindResult(String id, String jid)
+    public static Iq BindResult(String id, JID jid)
     {
-        return String.format("<iq type='result' id='%1s'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><jid>%2s</jid></bind></iq>", id, jid);
+        return new Iq("", "", id, "result", "", "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><jid>" + jid.toString() + "</jid></bind>");
     }
 
-    public static String GoodResult(String id, String from)
+    public static Iq GoodResult(String id, String from)
     {
-        return String.format("<iq type='result' id='%s' from='%s'/>", id, from);
+        return new Iq(from, id, "result");
     }
 
-    public static String ServiceUnavaliableError(String id)
+    public static Iq ServiceUnavaliableError(String id)
     {
-        return String.format("<iq type='error' id='%1s'>" +
+        return new Iq("", "", id, "error", "",
                 "<error type='cancel'>" +
                 "<service-unavaliable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>" +
-                "</error>" + "</iq>", id);
+                "</error>" + "</iq>");
 
     }
 }

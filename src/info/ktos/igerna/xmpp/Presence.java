@@ -93,15 +93,4 @@ public class Presence extends Stanza
     {
         this("", from, "", type, "", "");
     }
-
-    @Override
-    public String toString()
-    {
-        // TODO: zmienić na rzeczywistą zamianę xml na stringa, outerXML
-
-        String result = "<presence type='unavaliable' />";
-
-        return result;
-    }
-
 }
