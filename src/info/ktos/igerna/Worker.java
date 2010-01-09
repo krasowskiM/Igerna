@@ -41,6 +41,7 @@ class Worker extends Thread
 
     public JID clientJID;
     public ClientState clientState;
+    public int clientResourcePriority;
 
     public void stopWorking()
     {

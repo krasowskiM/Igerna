@@ -187,6 +187,7 @@ class XMPPStreamReader extends Thread
                                 // TODO: powinno być brane z XML, a nie generowane przez serwer
                                 String newres = "foo";
                                 parent.clientJID.setResource(newres);
+                                parent.clientResourcePriority = 0;
 
                                 // wysyłanie do klienta potwierdzenia
                                 parent.sendToClient(Iq.BindResult(bindid, parent.clientJID.toString()));

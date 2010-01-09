@@ -34,7 +34,30 @@ public class JID
     {
         return this.userName;
     }
+    
+    public String getServer()
+    {
+        return this.server;
+    }
 
+    public String getResourse()
+    {
+        return this.resource;
+    }
+
+    public void setResource(String newres)
+    {
+        this.resource = newres;
+    }
+
+    /**
+     * Tworzenie JabberID na podstawie trzech parametrów: nazwy użytkownika,
+     * adresu serwera oraz zasobu
+     *
+     * @param name Nazwa użytkownika
+     * @param serv Adres serwera
+     * @param res Zasób
+     */
     public JID(String name, String serv, String res)
     {
         this.userName = name;
@@ -42,10 +65,30 @@ public class JID
         this.resource = res;
     }
 
-    public void setResource(String newres)
+    /**
+     * Tworzenie JabberID na podstawie jego tekstowej wersji
+     *
+     * @param s
+     */
+    public JID(String s)
     {
-        this.resource = newres;
-    }
+        int at = s.indexOf("@");
+        int slash = s.indexOf("/");
+        
+        if (slash == -1)
+        {
+            // jeśli w JID nie ma zasobu
+            this.userName = s.substring(0, at);
+            this.server = s.substring(at);
+            this.resource = "";
+        }
+        else
+        {
+            this.userName = s.substring(0, at);
+            this.server = s.substring(at, slash);
+            this.resource = s.substring(slash);
+        }
+    }    
 
     @Override
     public String toString()
