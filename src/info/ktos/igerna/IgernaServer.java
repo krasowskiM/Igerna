@@ -30,6 +30,10 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import info.ktos.igerna.xmpp.*;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+
 /**
  * Główna klasa aplikacji
  */
@@ -358,21 +362,23 @@ public class IgernaServer
      */
     private static void Test()
     {
-        /*try {
+        try
+        {
             String n = "";
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder parser = dbf.newDocumentBuilder();
             Document xmldoc = parser.parse("test.xml");
 
             Iq i = new Iq(xmldoc.getElementsByTagName("iq").item(0));
-            System.out.println(i.getAsNode().toString());
+            System.out.println(XmlUtil.outerXml(i.getAsNode()));
 
             xmldoc = null;
             parser.reset();
-        } catch (Exception ex) {
+        } 
+        catch (Exception ex)
+        {
             System.out.println(ex.getMessage());
-        }*/
-
+        }
         
         System.exit(0);
     }

@@ -58,10 +58,13 @@ public class XmlUtil
     /**
      * Zwracanie dzieci węzła XML jako pojedynczego stringa
      *
+     * by Koziołek (www.koziolekweb.pl), zmodyfikowane przeze mnie,
+     * dostałem z devpytania.pl
+     *
      * @param node
      * @return
      */
-    private static String innerXml(Node node)
+    public static String innerXml(Node node)
     {
         String result = "";
 
@@ -86,7 +89,7 @@ public class XmlUtil
      * @param node
      * @return
      */
-    private static String outerXml(Node node) 
+    public static String outerXml(Node node)
     {
         String result = "";
         node.normalize();
@@ -104,19 +107,19 @@ public class XmlUtil
             for (int i = 0; i < attributes.getLength(); i++)
             {
                 Node item = attributes.item(i);
-                result += item.getNodeName() + "='" + item.getNodeValue() + "'";
+                result += item.getNodeName() + "='" + item.getNodeValue() + "' ";
             }
         }        
 
         NodeList childNodes = node.getChildNodes();
         if (childNodes.getLength() == 0)
         {
-            result += " />";
+            result += "/>";
             return result;
         }
         else
         {
-            result += ">";
+            result = result.trim() + ">";
         }
 
         for (int i = 0; i < childNodes.getLength(); i++)
@@ -124,7 +127,7 @@ public class XmlUtil
                 result += outerXml(childNodes.item(i));
         }
 
-        result += "<" + node.getNodeName() + " />";
+        result += "</" + node.getNodeName() + ">";
 
         return result;
     }
