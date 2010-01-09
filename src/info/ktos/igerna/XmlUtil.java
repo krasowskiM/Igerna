@@ -92,6 +92,10 @@ public class XmlUtil
     public static String outerXml(Node node)
     {
         String result = "";
+
+        if (node == null)
+            return "";
+
         node.normalize();
 
         if (node.getNodeType() == Node.TEXT_NODE)

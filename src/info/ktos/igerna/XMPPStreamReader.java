@@ -200,7 +200,7 @@ class XMPPStreamReader extends Thread
                                 parent.clientResourcePriority = 0;
 
                                 // wysyłanie do klienta potwierdzenia
-                                parent.sendToClient(Iq.BindResult(bindid, parent.clientJID.toString()));
+                                parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
 
                                 parent.clientState.setState(ClientState.BOUND);
                             }

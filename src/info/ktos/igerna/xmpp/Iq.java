@@ -21,6 +21,7 @@
  */
 package info.ktos.igerna.xmpp;
 
+import info.ktos.igerna.XmlUtil;
 import java.io.ByteArrayInputStream;
 import org.w3c.dom.*;
 
@@ -37,37 +38,45 @@ public class Iq extends Stanza
 
     public Iq(String to, String from, String id, String type, String lang, String children)
     {
-        super(to, from, id, type, lang, children);
+        super(to, from, id, type, lang, children);        
         try
         {            
-            xmlnode = xmldoc.createElement("iq");
+            //xmlnode = xmldoc.createElement("iq");
+            Element xmlelem = xmldoc.createElement("iq");
 
             if (!this.from.equals(""))
-                xmlnode.appendChild(createAttributeValue("from", this.from));
+                xmlelem.setAttribute("from", this.from);
 
             if (!this.to.equals(""))
-                xmlnode.appendChild(createAttributeValue("to", this.to));
+                xmlelem.setAttribute("to", this.to);
 
             if (!this.id.equals(""))
-                xmlnode.appendChild(createAttributeValue("id", this.id));
-
-            if (!this.type.equals(""))
-                xmlnode.appendChild(createAttributeValue("type", this.type));
+                xmlelem.setAttribute("id", this.id);
 
             if (!this.lang.equals(""))
-                xmlnode.appendChild(createAttributeValue("xml:lang", this.lang));
+                xmlelem.setAttribute("xml:lang", this.lang);
+
+            if (!this.type.equals(""))
+                xmlelem.setAttribute("type", this.type);            
 
             // parsowanie dzieci i przepisywanie ich do xmlnode
             if (!this.childXML.equals(""))
-            {
+            {                
                 Document child = parser.parse(new ByteArrayInputStream(childXML.getBytes()));
-                for (int i = 0; i < child.getChildNodes().getLength(); i++)
-                    xmlnode.appendChild(child.getChildNodes().item(i));
+                xmlelem.appendChild(xmldoc.importNode(child.getFirstChild(), true));
             }
+            
+            if (xmlelem == null)
+                System.out.println("here");
+
+
+            // i zrzutowanie elementu na Node
+            xmlnode = xmlelem;
         }
         catch (Exception ex)
         {
             // TODO: co zrobić w takim wypadku z wyjątkiem?
+            System.out.println(ex.getMessage());
         }
 
     }
@@ -96,7 +105,7 @@ public class Iq extends Stanza
         return new Iq("", "", id, "error", "",
                 "<error type='cancel'>" +
                 "<service-unavaliable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>" +
-                "</error>" + "</iq>");
+                "</error>");
 
     }
 }

@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import info.ktos.igerna.xmpp.*;
+import info.ktos.igerna.xmpp.xeps.Vcard;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -307,7 +308,7 @@ public class IgernaServer
         }
         else
         {
-            recipientWorker.sendToClient(st.toString());
+            recipientWorker.sendToClient(st);
             return true;
         }
         
@@ -351,7 +352,7 @@ public class IgernaServer
 
         for (Worker w : workerPool)
         {
-            w.sendToClient(st.toString());
+            w.sendToClient(st);
         }
 
         return result;
@@ -362,7 +363,7 @@ public class IgernaServer
      */
     private static void Test()
     {
-        try
+        /*try
         {
             String n = "";
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -378,8 +379,10 @@ public class IgernaServer
         catch (Exception ex)
         {
             System.out.println(ex.getMessage());
-        }
-        
+        }*/
+
+        System.out.println(Vcard.get("ktos@ktos.info", "localhost", "ad", new JID("ktos@ktos.info")).toString());
+
         System.exit(0);
     }
 }

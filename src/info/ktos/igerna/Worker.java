@@ -22,6 +22,7 @@
 package info.ktos.igerna;
 
 import info.ktos.igerna.xmpp.JID;
+import info.ktos.igerna.xmpp.Stanza;
 import java.io.*;
 import java.net.Socket;
 
@@ -129,12 +130,23 @@ class Worker extends Thread
     /**
      * Dodaje tekst do bufora, który to zostanie przy następnym
      * "obrocie" pętli do niego wysłany
+     *
      * @param xml
      */
     public void sendToClient(String xml)
     {
         System.out.println("To: " + xml);
         mbuf.addToBuffer(xml);
+    }
+
+    /**
+     * Wysyłanie do klienta jakiejś stanzy
+     *
+     * @param st
+     */
+    public void sendToClient(Stanza st)
+    {
+        sendToClient(st.toString());
     }
 
     /**
