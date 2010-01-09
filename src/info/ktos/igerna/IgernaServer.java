@@ -289,6 +289,52 @@ public class IgernaServer
         
     }
 
+    /**
+     * Wysyłanie wiadomości do wielu odbiorców
+     *
+     * Powinno być wykorzystywane na przykład przy rozsyłaniu <presence />
+     * do osób będących na liście kontaktów danego klienta
+     *
+     * @param st
+     * @return
+     */
+    public static boolean sendToMany(JID[] recipients, Stanza st)
+    {
+        boolean result = true;
+
+        for (JID jid : recipients)
+        {
+            result = result && IgernaServer.sendMessage(jid, st);
+        }
+
+        return result;
+    }
+
+    /**
+     * Wysyłanie wiadomości do wszystkich podłączonych klientów
+     *
+     * To posłuży jako implementacja rozsyłania <presence /> -
+     * w rzeczywistości to powinno to być przesyłane tylko
+     * do osób będących na liście kontaktów, ale u nas to będzie
+     * do wszystkich na serwerze.
+     *
+     * @param st
+     * @return
+     */
+    public static boolean sendToAll(Stanza st)
+    {
+        boolean result = true;
+
+        for (Worker w : workerPool)
+        {
+            w.sendToClient(st.toString());
+        }
+
+        return result;
+    }
+
+
+
     private static void Test()
     {
         /*try {
