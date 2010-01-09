@@ -75,7 +75,7 @@ class XMPPStreamReader extends Thread
         }
         catch (Exception ex)
         {
-            System.out.println("Błąd: " + ex.getLocalizedMessage());
+            System.out.println("Błąd: " + ex.getLocalizedMessage() + ": 78");
             IgernaServer.stop();
         }
     }
@@ -254,7 +254,7 @@ class XMPPStreamReader extends Thread
                     catch (org.xml.sax.SAXParseException ex)
                     {
                         // ojej, klient wysłał nam coś, czego nie powinien był
-                        System.out.println("Błąd: błąd parsowania XML od klienta");
+                        System.out.println("Błąd: błąd parsowania XML od klienta: 257");
                         parent.sendImmediately(StreamError.invalidXML());
 
                         this.stopWorking();
@@ -263,8 +263,8 @@ class XMPPStreamReader extends Thread
                     // jakiś inny błąd, na przykład nullpointerexception ;-)
                     catch (Exception ex)
                     {
-                        System.out.println("Błąd: " + ex.toString() + ": " + ex.getMessage());
-                        //ex.printStackTrace();
+                        System.out.println("Błąd: " + ex.toString() + ": " + ex.getMessage() + ": 266");
+                        ex.printStackTrace();
                         parent.sendImmediately(StreamError.internalServerError2());
 
                         this.stopWorking();
@@ -276,7 +276,7 @@ class XMPPStreamReader extends Thread
             {
                 // dirty hack, trzeba by to było poprawić pewnie
                 if (ex.getLocalizedMessage() != null)
-                    System.out.println("Błąd: " + ex.getLocalizedMessage());
+                    System.out.println("Błąd: " + ex.getLocalizedMessage() + ": 279");
                 else
                     System.out.println("Debug: klient rozłączony");
                 
@@ -304,7 +304,7 @@ class XMPPStreamReader extends Thread
                 String to = XmlUtil.getAttributeAsString(main, "to");
 
                 // jeśli to zostało wysłane do serwera
-                if (to.equals(IgernaServer.getBindHost()))
+                if (to.equals(IgernaServer.getBindHost()) || to.equals(""))
                 {
                     respondToIq(new Iq(main));
                 }
@@ -351,9 +351,6 @@ class XMPPStreamReader extends Thread
                         IgernaServer.sendToAll(new Presence(item, parent.clientJID));
                     }
                 }
-
-
-
             }
         }
 

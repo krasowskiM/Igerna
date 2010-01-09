@@ -54,10 +54,10 @@ public abstract class Stanza
         this.xmlnode = n;
         
         this.id = XmlUtil.getAttributeAsString(n, "id");
-        this.id = XmlUtil.getAttributeAsString(n, "from");
-        this.id = XmlUtil.getAttributeAsString(n, "to");
-        this.id = XmlUtil.getAttributeAsString(n, "type");
-        this.id = XmlUtil.getAttributeAsString(n, "lang");
+        this.from = XmlUtil.getAttributeAsString(n, "from");
+        this.to = XmlUtil.getAttributeAsString(n, "to");
+        this.type = XmlUtil.getAttributeAsString(n, "type");
+        this.lang = XmlUtil.getAttributeAsString(n, "xml:lang");
     }
 
     /**

@@ -21,7 +21,6 @@
  */
 package info.ktos.igerna.xmpp;
 
-import info.ktos.igerna.XmlUtil;
 import java.io.ByteArrayInputStream;
 import org.w3c.dom.*;
 

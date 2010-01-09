@@ -128,7 +128,7 @@ public class XmlUtil
 
         for (int i = 0; i < childNodes.getLength(); i++)
         {
-                result += outerXml(childNodes.item(i));
+            result += outerXml(childNodes.item(i));
         }
 
         result += "</" + node.getNodeName() + ">";

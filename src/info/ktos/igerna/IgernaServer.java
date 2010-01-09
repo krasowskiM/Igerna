@@ -381,7 +381,7 @@ public class IgernaServer
             System.out.println(ex.getMessage());
         }*/
 
-        System.out.println(Vcard.get("ktos@ktos.info", "localhost", "ad", new JID("ktos@ktos.info")).toString());
+        System.out.println(Iq.ServiceUnavaliableError("someid"));
 
         System.exit(0);
     }

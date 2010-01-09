@@ -135,7 +135,7 @@ class Worker extends Thread
      */
     public void sendToClient(String xml)
     {
-        System.out.println("To: " + xml);
+        //System.out.println("To: " + xml);
         mbuf.addToBuffer(xml);
     }
 
@@ -156,7 +156,7 @@ class Worker extends Thread
      */
     public void sendImmediately(String xml)
     {
-        System.out.println("To: " + xml);
+        //System.out.println("To: " + xml);
         output.println(xml);
     }
 

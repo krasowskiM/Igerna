@@ -23,6 +23,7 @@ package info.ktos.igerna.xmpp;
 
 import java.io.ByteArrayInputStream;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
@@ -48,7 +49,11 @@ public class Presence extends Stanza
     public Presence(Node n, JID from)
     {
         super(n);
-        xmlnode.appendChild(createAttributeValue("from", from.toString()));
+
+        // chora konstrukcja, ale działa
+        Element xmlelem = (Element)xmlnode;
+        xmlelem.setAttribute("from", from.toString());
+        xmlnode = xmlelem;
     }
 
     public Presence(String to, String from, String id, String type, String lang, String children)
