@@ -226,26 +226,72 @@ public class IgernaServer
      */
     public static boolean sendMessage(JID recipient, Stanza st)
     {
-        // iterowanie po poszczególnych wątkach roboczych
-        for (Worker w : workerPool)
+        // jeśli wiadomość ma puste "to" albo nie jest do naszego
+        // serwera, to wysłanie się nie może powieść
+        if (st.to.equals("") || !st.to.equals(IgernaServer.bindHost))
+            return false;
+
+        Worker recipientWorker = null;
+        int tmp = -1;
+
+        // jeśli nie został podany zasób odbiorcy,
+        // to musimy przelecieć po wszystkich wątkach i dostać największy
+        // priorytet zasobu i wątek do niego przypisany
+        if (recipient.getResourse().equals(""))
         {
-            // jeśli klient jest podłączony i aktywny
-            if (w.clientState.getState() == ClientState.ACTIVE)
+            for (Worker w : workerPool)
             {
-                // jeśli jego JID odpowiada JIDowi odbiorcy
-                if (w.clientJID.equals(recipient))
+                // jeśli klient jest podłączony i aktywny
+                if (w.clientState.getState() == ClientState.ACTIVE)
                 {
-                    w.sendToClient(st.toString());
-                    return true;
+                    // jeśli jego JID odpowiada JIDowi odbiorcy
+                    if (w.clientJID.equals(recipient) && (w.clientResourcePriority > tmp))
+                    {
+                        recipientWorker = w;
+                        tmp = w.clientResourcePriority;                        
+                    }
                 }
             }
         }
-        return false;
+        else
+        {
+            // iterowanie po poszczególnych wątkach roboczych
+            for (Worker w : workerPool)
+            {
+                // jeśli klient jest podłączony i aktywny
+                if (w.clientState.getState() == ClientState.ACTIVE)
+                {
+                    // jeśli jego JID odpowiada JIDowi odbiorcy
+                    if (w.clientJID.equals(recipient))
+                    {
+                        recipientWorker = w;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (recipientWorker == null)
+        {
+            // jeśli się nie udało znaleźć do kogo wysłać, to może oznaczać,
+            // że wiadomość jest przeznaczona dla kogoś, kto nie jest
+            // podłączony
+
+            // w idealnym świecie tutaj było by przechowywanie wiadomości offline
+            // ale u mnie będzie ona niestety ignorowana
+            return false;
+        }
+        else
+        {
+            recipientWorker.sendToClient(st.toString());
+            return true;
+        }
+        
     }
 
     private static void Test()
     {
-        try {
+        /*try {
             String n = "";
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder parser = dbf.newDocumentBuilder();
@@ -258,6 +304,6 @@ public class IgernaServer
             parser.reset();
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
-        }
+        }*/
     }
 }
