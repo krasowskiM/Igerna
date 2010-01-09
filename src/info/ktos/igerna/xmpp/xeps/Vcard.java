@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -23,8 +23,6 @@ package info.ktos.igerna.xmpp.xeps;
 
 import info.ktos.igerna.xmpp.Iq;
 import info.ktos.igerna.xmpp.JID;
-import java.io.IOException;
-import org.xml.sax.SAXException;
 
 /**
  * Klasa odpowiadająca za XEP-0054: vcard-tmp, generowanie Iq
@@ -34,7 +32,7 @@ import org.xml.sax.SAXException;
  */
 public class Vcard
 {
-    public static Iq get(String to, String from, String id, JID owner) throws SAXException, IOException
+    public static Iq get(String to, String from, String id, JID owner)
     {
         String vcard = "<vCard xmlns='vcard-temp'><NICKNAME>" + owner.getUserName() + "</NICKNAME></vCard>";
         return new Iq(to, from, id, "result", "", vcard);

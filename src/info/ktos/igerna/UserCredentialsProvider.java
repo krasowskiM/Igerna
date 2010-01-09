@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -22,7 +22,7 @@
 package info.ktos.igerna;
 
 /**
- *
+ * Klasa udostępniająca sprawdzanie poprawności danych użytkownika
  */
 public class UserCredentialsProvider
 {

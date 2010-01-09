@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -97,6 +97,8 @@ public class Iq extends Stanza
 
     /// metody statyczne odpowiedzialne za tworzenie Iq będących różnymi
     /// odpowiedziami serwera
+    // TODO: przenieść do czegoś w rodzaju IqFactory oraz zmienić na tworzenie obiektów
+    // a nie na zwracanie stringów
     public static String BindResult(String id, String jid)
     {
         return String.format("<iq type='result' id='%1s'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><jid>%2s</jid></bind></iq>", id, jid);

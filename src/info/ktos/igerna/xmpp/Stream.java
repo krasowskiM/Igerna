@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -25,15 +25,27 @@ package info.ktos.igerna.xmpp;
 import java.util.Random;
 
 /**
- *
+ * Klasa odpowiedająca za strumień w XMPP, zawierająca trochę statycznych
+ * metod odpowiedzialnych za różne elementy strumienia
  */
 public class Stream
 {
+    /**
+     * Generowanie prologu XML w postaci stringa
+     * @return
+     */
     public static String xmlPrologue()
     {
         return "<?xml version='1.0'?>";
     }
 
+    /**
+     * Generowanie początku strumienia
+     *
+     * @param from Adres serwera
+     * @param id Identyfikator strumienia
+     * @return
+     */
     public static String start(String from, String id)
     {
         return String.format("<stream:stream from='%1s' id='%2s'" +
@@ -41,17 +53,32 @@ public class Stream
                " version='1.0'>", from, id);
     }
 
+    /**
+     * Generowanie znacznika końca strumienia
+     * @return
+     */
     public static String end()
     {
         return "</stream:stream>";
     }
 
-    public static String streamId()
+    /**
+     * Generowanie nowego identyfikatora
+     * @return
+     */
+    public static String generateId()
     {
         Random r = new Random();
         return "igerna" + r.nextInt();
     }
 
+    /**
+     * Generowanie opisu mechanizmów uwierzytelnienia SASL jako
+     * "ficzerów" strumienia
+     * 
+     * @param mechanisms
+     * @return
+     */
     public static String SASLfeatures(String[] mechanisms)
     {
         String m = "";
@@ -68,11 +95,25 @@ public class Stream
 
     }
 
+    /**
+     * Komunikat o poprawnym uwierzytelnieniu użytkownika
+     *
+     * @return
+     */
     public static String SASLsuccess()
     {
         return "<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>";
     }
 
+    /**
+     * Zwracanie możliwości, jakie obsługuje serwer, przedstawiane
+     * klientowi po uwierzytelnieniu
+     *
+     * Tutaj powinny znaleźć się obsługiwane XEP-y oraz podstawowe
+     * elementy jak <bind /> czy <session />.
+     *
+     * @return
+     */
     public static String features()
     {
         return "<stream:features>" + 

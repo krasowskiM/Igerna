@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -30,9 +30,9 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import info.ktos.igerna.xmpp.*;
 
-import javax.xml.parsers.*;
-import org.w3c.dom.*;
-
+/**
+ * Główna klasa aplikacji
+ */
 public class IgernaServer
 {    
     private static Config config;
@@ -45,16 +45,32 @@ public class IgernaServer
 
     public static UserCredentialsProvider ucp;
 
+    /**
+     * Pobiera host do którego jest podłączony serwer
+     * 
+     * @return
+     */
     public static String getBindHost()
     {
         return bindHost;
     }
 
+    /**
+     * Pobiera port na którym działa serwer
+     *
+     * @return
+     */
     public static int getBindPort()
     {
         return bindPort;
     }
 
+    /**
+     * Pobieranie dostępnych mechanizmów uwierzytelnienia SASL
+     * na podstawie pliku konfiguracyjnego
+     *
+     * @return
+     */
     public static String[] getSASLMechanisms()
     {
         return config.getArrayEntry("server", "sasl", new String[] { "PLAIN" });
@@ -337,8 +353,9 @@ public class IgernaServer
         return result;
     }
 
-
-
+    /**
+     * Playground :-), uruchamiany w konfiguracji "test"
+     */
     private static void Test()
     {
         /*try {

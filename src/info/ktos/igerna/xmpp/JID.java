@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -100,6 +100,10 @@ public class JID
             return this.toStringWithoutResource();
     }
 
+    /**
+     * Zwraca JID jako tekst, jednakże bez zasobu
+     * @return
+     */
     public String toStringWithoutResource()
     {
         return String.format("%1s@%2s", this.userName, this.server);

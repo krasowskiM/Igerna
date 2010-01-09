@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -25,6 +25,9 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+/**
+ * Konfiguracja serwera
+ */
 class Config
 {
     private String path;
@@ -32,8 +35,7 @@ class Config
     private String[] lines;
 
     /**
-     * Konstruktor klasy Config, odczytywanie pliku konfiguracyjnego ze wskazanej
-     * ścieżki.
+     * Konstruktor klasy Config, ustawianie ścieżki pliku
      *
      * @param path
      */
@@ -54,12 +56,11 @@ class Config
      * @return Zawartość danego wpisu
      */
     public String getStringEntry(String section, String entry, String def)
-    {
-        String s;
+    {        
         String reg = String.format("^%s\\.%s([\\s]*)=([\\s]*)\"[a-z0-9.-]+\";$", section, entry);
         Pattern r = Pattern.compile(reg);
         Pattern r2 = Pattern.compile("\"[a-z0-9.-]+\"");
-
+        // TODO: tutaj miała być jakaś optymalizacja, ale zapomniałem jaka
         String result = def;
 
         for (int i = 0; i < lines.length; i++)
@@ -90,8 +91,7 @@ class Config
      * @return Zawartość danego wpisu jako tablica stringów
      */
     public String[] getArrayEntry(String section, String entry, String[] def)
-    {
-        String s;
+    {        
         String reg = String.format("^%1s.%2s(\\s*)=(\\s*)\\((\\s*\".*\",?\\s*)+\\);$", section, entry);
         Pattern r = Pattern.compile(reg);
         Pattern r2 = Pattern.compile("\\(.*\\)");
@@ -132,9 +132,15 @@ class Config
      */
     public void setStringEntry(String section, String entry, String newValue)
     {
-
+        // TODO: zapis do pliku konfiguracyjnego
     }
 
+    /**
+     * Odczytywanie pliku konfiguracyjnego
+     * 
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     public void readFile() throws FileNotFoundException, IOException
     {
         FileReader fileReader = new FileReader(path);

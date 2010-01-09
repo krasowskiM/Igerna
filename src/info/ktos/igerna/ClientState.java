@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -26,12 +26,41 @@ package info.ktos.igerna;
  */
 class ClientState
 {
+    /**
+     * Klient jest rozłączony
+     */
     public static final int DISCONNECTED = 0;
+
+    /**
+     * Klient się podłączył fizycznie, ale nic jeszcze nie wysłał
+     */
     public static final int CONNECTING = 1;
+
+    /**
+     * Klient wysłał już <stream>, a my mu powiedzieliśmy, by się zautoryzował
+     * i przesłaliśmy mechanizmy autoryzacji
+     */
     public static final int AUTHORIZING = 2;
+
+    /**
+     * Klient się zautoryzował, przedstawiamy mu inne możliwości
+     */
     public static final int AUTHORIZED = 3;
+
+    /**
+     * Klient jest w trakcie podłączana do zasobu i ustanawiania sesji
+     */
     public static final int BINDING = 4;
+
+    /**
+     * Klient się podłączył, ustanawia sesję
+     */
     public static final int BOUND = 5;
+
+    /**
+     * Klient się podłączył do zasobu, ustanowił sesję, jest w trakcie pracy
+     * i gotowy do działania
+     */
     public static final int ACTIVE = 6;
 
     private int state = 0;

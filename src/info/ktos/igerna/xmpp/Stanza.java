@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -44,6 +44,11 @@ public abstract class Stanza
     public String lang;
     public String childXML;
 
+    /**
+     * Tworzenie obiektu na podstawie węzła XML-owego
+     *
+     * @param n
+     */
     public Stanza(Node n)
     {
         this.xmlnode = n;
@@ -55,26 +60,55 @@ public abstract class Stanza
         this.id = XmlUtil.getAttributeAsString(n, "lang");
     }
 
+    /**
+     * Pobieranie "dzieci" danej stanzy
+     * @return
+     */
     public NodeList getChildItems()
     {
         return xmlnode.getChildNodes();
     }
 
+    /**
+     * Pobieranie stanzy w postaci węzła XML-owego
+     * @return
+     */
     public Node getAsNode()
     {
         return xmlnode;
     }
 
+    /**
+     * Konstruktor bezparametrowy, w zasadzie nie robi nic
+     */
     public Stanza()
     {
         
     }
 
+    /**
+     * Konstruktor tworzący stanzę i wymagający podstawowych atrybutów
+     *
+     * @param to
+     * @param from
+     * @param id
+     * @param type
+     */
     public Stanza(String to, String from, String id, String type)
     {
         this(to, from, id, type, "en", "");
     }
 
+    /**
+     * Pełne tworzenie stanzy na podstawie tekstu
+     *
+     * @param to
+     * @param from
+     * @param id
+     * @param type
+     * @param lang
+     * @param childXML Tekstowy XML zawierający dzieci obiektu
+     */
     public Stanza(String to, String from, String id, String type, String lang, String childXML)
     {
         this.to = to;
@@ -100,6 +134,14 @@ public abstract class Stanza
         }
     }
 
+    /**
+     * Mała, użyteczna funkcja tworząca XML-owy atrybut wraz z wartością, owoc
+     * refaktoryzacji
+     * @param name
+     * @param value
+     * @return
+     * @throws DOMException
+     */
     protected Node createAttributeValue(String name, String value) throws DOMException
     {
         Node nfrom = xmldoc.createAttribute(name);

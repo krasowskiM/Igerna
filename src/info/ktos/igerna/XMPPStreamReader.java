@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -50,6 +50,14 @@ class XMPPStreamReader extends Thread
         this.stopped = true;
     }
 
+    /**
+     * Konstruktor, wywoływany przez Workera
+     *
+     * Tworzy parser XML, wykorzystywany później
+     *
+     * @param rdr BufferedReader, który odczytuje wejściowe dane
+     * @param parent Worker będący rodzicem
+     */
     public XMPPStreamReader(BufferedReader rdr, Worker parent)
     {
         super();
@@ -71,7 +79,10 @@ class XMPPStreamReader extends Thread
             IgernaServer.stop();
         }
     }
-
+    
+    /**
+     * Metoda wywołująca start wątku, główna pętla klasy
+     */
     @Override
     public void run()
     {
@@ -87,7 +98,6 @@ class XMPPStreamReader extends Thread
 
                 if ((res != -1) && (!cltext.equals("")))
                 {
-                    
                     System.out.println("Fr: " + cltext);
                     
                     try
@@ -112,7 +122,7 @@ class XMPPStreamReader extends Thread
                             
                             // TODO: sprawdzanie wersji!                            
 
-                            serverStreamStart = Stream.start(IgernaServer.getBindHost(), Stream.streamId());
+                            serverStreamStart = Stream.start(IgernaServer.getBindHost(), Stream.generateId());
 
                             // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
                             // zatem odpowiadamy naszym streamem oraz SASLem
@@ -235,9 +245,6 @@ class XMPPStreamReader extends Thread
                         {
                             cltext = clientStreamStart + cltext + Stream.end();
 
-                            // TODO: tutaj rozpoznawanie tagów i odpowiednie akcje podejmowane
-                            // dla różnych głupich pomysłów
-
                             InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
                             xmldoc = parser.parse(xmlis);
                             respondClient();
@@ -299,7 +306,7 @@ class XMPPStreamReader extends Thread
                 // jeśli to zostało wysłane do serwera
                 if (to.equals(IgernaServer.getBindHost()))
                 {
-                    respondToIq(id, from, to);
+                    respondToIq(new Iq(main));
                 }
                 else
                 {
@@ -375,9 +382,12 @@ class XMPPStreamReader extends Thread
         return;
     }
 
-    private void respondToIq(String id, String from, String to)
-    {
-        // XEP-0054: vcard-tmp
-        parent.sendToClient(Iq.ServiceUnavaliableError(id));
+    /**
+     * Analizowanie różnych iq i odpowiadanie na nie, na przykład na zapytanie
+     * o vCard
+     */
+    private void respondToIq(Iq iq)
+    {        
+        parent.sendToClient(Iq.ServiceUnavaliableError(iq.id));
     }
 }

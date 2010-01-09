@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -26,30 +26,54 @@ import info.ktos.igerna.IgernaServer;
 
 
 /**
- *
+ * Klasa zwracająca różne stringi będące odpowiednikami błędów serwera
+ * na poziomie całego strumienia komunikacji
  */
 public class StreamError
 {
+    /**
+     * Błąd złego XML wysłanego przez klienta, przesyłany w momencie
+     * gdy np. nie powiedzie się parsowanie XML
+     * @return
+     */
     public static String invalidXML()
     {
         return err("<invalid-xml />");
     }
 
+    /**
+     * Wewnętrzny błąd serwera, razem z prologiem XML i początkiem strumienia
+     * używany na początku komunikacji
+     * @return
+     */
     public static String internalServerError()
     {
         return err("<internal-server-error />");
     }
 
+    /**
+     * Wewnętrzny błąd serwera
+     * @return
+     */
     public static String internalServerError2()
     {
         return err2("<internal-server-error />");
+    }
+
+    /**
+     * Komunikat o niepowodzeniu uwierzytelnienia SASL
+     * @return
+     */
+    public static String SASLnotauthorized()
+    {
+        return SASLerror("<not-authorized/>");
     }
 
     private static String err(String err)
     {
         return String.format("%s%s<stream:error>%s</stream:error>%s",
                 Stream.xmlPrologue(),
-                Stream.start(IgernaServer.getBindHost(), Stream.streamId()),
+                Stream.start(IgernaServer.getBindHost(), Stream.generateId()),
                 err,
                 Stream.end());
     }
@@ -64,10 +88,5 @@ public class StreamError
     private static String SASLerror(String err)
     {
         return String.format("<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>%1s</failure>%2s", err, Stream.end());
-    }
-
-    public static String SASLnotauthorized()
-    {
-        return SASLerror("<not-authorized/>");
     }
 }

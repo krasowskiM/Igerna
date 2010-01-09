@@ -1,11 +1,29 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Igerna, version 0.2
+ *
+ * Copyright (C) Marcin Badurowicz 2009
+ *
+ *
+ * This file is part of Igerna.
+ *
+ * Igerna is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Igerna is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Igerna.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package info.ktos.igerna;
 
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * Klasa zawierająca pewne dodatkowe funkcje do obsługi XML, używane
@@ -13,7 +31,6 @@ import org.w3c.dom.Node;
  */
 public class XmlUtil
 {
-
     /**
      * Pobiera atrybut danego węzła jako string, w przeciwnym razie
      * zwraca pustego stringa.
@@ -37,5 +54,59 @@ public class XmlUtil
             return n.getAttributes().getNamedItem(att).getTextContent();
         }
     }
+
+    private static String innerXml(Node node)
+    {
+        String result = "";
+
+        node.normalize();
+        if (node.getNodeType() == Node.TEXT_NODE)
+        {
+                return node.getNodeValue();
+        }
+
+        NodeList childNodes = node.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++)
+        {
+                result += outerXml(childNodes.item(i));
+        }
+
+        return result;
+    }
+
+    private static String outerXml(Node node) 
+    {
+        String result = "";
+        node.normalize();
+
+        if (node.getNodeType() == Node.TEXT_NODE)
+        {         
+            return node.getNodeValue();
+        }
+
+        result = "<" + node.getNodeName() + " ";
+
+        NamedNodeMap attributes = node.getAttributes();
+        if (attributes != null)
+        {
+            for (int i = 0; i < attributes.getLength(); i++)
+            {
+                Node item = attributes.item(i);
+                result += item.getNodeName() + "=\"" + item.getNodeValue() + "\"";
+            }
+        }
+        result += ">";
+
+        NodeList childNodes = node.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++)
+        {
+                result += outerXml(childNodes.item(i));
+        }
+
+        result += "<" + node.getNodeName() + "/>";
+
+        return result;
+    }
+
 
 }

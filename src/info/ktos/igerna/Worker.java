@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -34,8 +34,7 @@ class Worker extends Thread
     private Socket clientSocket;    
     private XMPPStreamReader xsr;
     private MessageBuffer mbuf;
-    private PrintWriter output;
-    private String stream;
+    private PrintWriter output;    
 
     protected boolean stopped = false;
 
@@ -43,11 +42,19 @@ class Worker extends Thread
     public ClientState clientState;
     public int clientResourcePriority;
 
+    /**
+     * Zatrzymywanie pracy wątku
+     */
     public void stopWorking()
     {
         stopped = true;
     }
 
+    /**
+     * Tworzenie wątku opartego na gniazdku klienta
+     * 
+     * @param clientSocket
+     */
     public Worker(Socket clientSocket)
     {
         super();
@@ -80,6 +87,9 @@ class Worker extends Thread
         System.out.println("Debug: tworzenie wątku");
     }
 
+    /**
+     * Główna pętla operacyjna
+     */
     @Override
     public void run()
     {

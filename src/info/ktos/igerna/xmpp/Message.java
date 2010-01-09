@@ -1,5 +1,5 @@
 /*
- * Igerna, version 0.1
+ * Igerna, version 0.2
  *
  * Copyright (C) Marcin Badurowicz 2009
  *
@@ -26,8 +26,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 /**
- *
- * @author Marcin
+ * Klasa będąca realizacją stanzy <message />
  */
 public class Message extends Stanza
 {
