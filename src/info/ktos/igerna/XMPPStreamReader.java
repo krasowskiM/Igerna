@@ -22,12 +22,15 @@
 package info.ktos.igerna;
 
 import info.ktos.igerna.xmpp.*;
+import info.ktos.igerna.xmpp.xeps.SoftwareVersion;
+import info.ktos.igerna.xmpp.xeps.Vcard;
 import java.io.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * Klasa odpowiedzialna za odczytywanie z wejściowego strumienia XMPP
@@ -310,8 +313,20 @@ class XMPPStreamReader extends Thread
                 }
                 else
                 {
-                    // przesyłamy dalej, do odpowiedniego odbiorcy
-                    IgernaServer.sendMessage(new JID(to), new Iq(main));
+                    JID j = new JID(to);
+                    if (j.getResource().equals(""))
+                    {
+                        // klient przysłał to, gdzie nie określono zasobu
+                        // zgodnie z RFC musimy w tym wypadku zrobić coś,
+                        // jeśli umiemy i odpowiedzieć błędem jeśli nie rozumiemy
+                        // RFC 3921 11.1.4.3
+                        respondToIq(new Iq(main));
+                    }
+                    else
+                    {
+                        // przesyłamy dalej, do odpowiedniego odbiorcy
+                        IgernaServer.sendMessage(j, new Iq(main));
+                    }
                 }
             }
         }
@@ -393,10 +408,67 @@ class XMPPStreamReader extends Thread
 
     /**
      * Analizowanie różnych iq i odpowiadanie na nie, na przykład na zapytanie
-     * o vCard
+     * o vCard, wersję oprogramowania itp.
      */
     private void respondToIq(Iq iq)
-    {        
+    {
+        // ignorowanie typu 'result' praktycznie
+        if (iq.type.equals("result"))
+            return;
+
+        if (iq.getAsNode().hasChildNodes())
+        {
+            NodeList children = iq.getAsNode().getChildNodes();
+
+            for (int i = 0; i < children.getLength(); i++)
+            {
+                // vCard (XEP-0054)                
+                if (children.item(i).getNodeName().equals("vCard"))
+                {
+                    // jeśli get to wysyłamy vCarda, na set nasz serwer odpowie,
+                    // że ok, ale tak naprawdę nic nie zrobi ;-)
+                    if (iq.type.equals("get"))
+                    {
+                        parent.sendToClient(Vcard.get(iq.from, iq.to, iq.id, new JID(iq.to)));                        
+                    }
+                    else if (iq.type.equals("set"))
+                    {
+                        parent.sendToClient(Iq.GoodResult(iq.id, iq.to));                        
+                    }
+                }                
+                else if (children.item(i).getNodeName().equals("query"))
+                {
+                    String xmlns = children.item(i).getAttributes().getNamedItem("xmlns").getTextContent();
+
+                    if (xmlns.equals("jabber:iq:roster"))
+                    {
+                        parent.sendToClient(Iq.ServiceUnavaliableError(iq.id));
+                    }
+                    else if (xmlns.equals("http://jabber.org/protocol/disco#info"))
+                    {
+                        // service discovery (XEP-0030)
+                    }
+                    else if (xmlns.equals("jabber:iq:version"))
+                    {
+                        // software version (XEP-0092)
+                        parent.sendToClient(SoftwareVersion.get(iq.from, IgernaServer.getBindHost(), iq.id));
+                    }
+                    else
+                    {
+                        // nieobsługiwane zapytanie, wysyłamy błąd
+                        parent.sendToClient(Iq.ServiceUnavaliableError(iq.id));
+                    }
+                }
+                else
+                {
+                    // TODO: nieznane polecenie, powinniśmy wysyłać błąd
+                    // ale jeśli getNodeName = #text to nie
+                    //return;
+                }
+            }
+
+            return;
+        }
         parent.sendToClient(Iq.ServiceUnavaliableError(iq.id));
     }
 }
