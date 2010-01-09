@@ -29,30 +29,14 @@ import org.w3c.dom.Node;
  *
  * @author Marcin
  */
-public class Presence extends Stanza
+public class Message extends Stanza
 {
-    public Presence(Node n)
+    public Message(Node n)
     {
         super(n);
     }
 
-    /**
-     * Tworzenie <presence /> w którym jest atrybut from
-     *
-     * Normalnie element presence nie zawiera from, gdy jest wysyłany
-     * od klienta do serwera, ale gdy serwer chce go rozesłać innym,
-     * to from jest wymagany
-     *
-     * @param n
-     * @param from
-     */
-    public Presence(Node n, JID from)
-    {
-        super(n);
-        xmlnode.appendChild(createAttributeValue("from", from.toString()));
-    }
-
-    public Presence(String to, String from, String id, String type, String lang, String children)
+    public Message(String to, String from, String id, String type, String lang, String children)
     {
         super(to, from, id, type, lang, children);
 
@@ -90,17 +74,12 @@ public class Presence extends Stanza
 
     }
 
-    public Presence(String from, String type)
-    {
-        this("", from, "", type, "", "");
-    }
-
     @Override
     public String toString()
     {
         // TODO: zmienić na rzeczywistą zamianę xml na stringa, outerXML
 
-        String result = "<presence type='unavaliable' />";
+        String result = "<message />";
 
         return result;
     }

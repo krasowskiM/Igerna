@@ -22,9 +22,7 @@
 package info.ktos.igerna.xmpp;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import org.w3c.dom.*;
-import org.xml.sax.SAXException;
 
 
 /**
