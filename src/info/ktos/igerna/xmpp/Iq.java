@@ -39,8 +39,7 @@ public class Iq extends Stanza
     {
         super(to, from, id, type, lang, children);        
         try
-        {            
-            //xmlnode = xmldoc.createElement("iq");
+        {                        
             Element xmlelem = xmldoc.createElement("iq");
 
             if (!this.from.equals(""))

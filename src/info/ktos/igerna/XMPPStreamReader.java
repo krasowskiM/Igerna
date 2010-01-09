@@ -197,7 +197,7 @@ class XMPPStreamReader extends Thread
                                 // TODO: powinno być brane z XML, a nie generowane przez serwer
                                 String newres = "foo";
                                 parent.clientJID.setResource(newres);
-                                parent.clientResourcePriority = 0;
+                                parent.clientResourcePriority = 5;
 
                                 // wysyłanie do klienta potwierdzenia
                                 parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
@@ -356,8 +356,20 @@ class XMPPStreamReader extends Thread
 
         // klient przysłał <message>
         if (xmldoc.getElementsByTagName("message").getLength() > 0)
-        {            
-            parent.sendToClient("<message from=\"127.0.0.1\" id=\"123\" to=\"ktos@127.0.0.1/foo\"><body>Test!</body></message>");
+        {                        
+            //parent.sendToClient(new Message("ktos@127.0.0.1", "127.0.0.1", "", "", "", "<body>Test!</body>"));
+            for (int i = 0; i < xmldoc.getElementsByTagName("message").getLength(); i++)
+            {                
+                // tworzenie obiektu Message i przepisywanie from przez serwer
+                Message m = new Message(xmldoc.getElementsByTagName("message").item(i));
+                m.setFrom(parent.clientJID);
+                System.out.println("XX: " + m);
+                // i wysyłanie
+                if (IgernaServer.sendMessage(new JID(m.to), m))
+                    System.out.println("OK");
+                else
+                    System.out.println("NIEOK");
+            }
         }
 
         /*

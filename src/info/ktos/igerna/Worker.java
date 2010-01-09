@@ -41,7 +41,7 @@ class Worker extends Thread
 
     public JID clientJID;
     public ClientState clientState;
-    public int clientResourcePriority;
+    public int clientResourcePriority = 0;
 
     /**
      * Zatrzymywanie pracy wątku
@@ -135,7 +135,7 @@ class Worker extends Thread
      */
     public void sendToClient(String xml)
     {
-        //System.out.println("To: " + xml);
+        System.out.println("To: " + xml);
         mbuf.addToBuffer(xml);
     }
 
@@ -152,11 +152,15 @@ class Worker extends Thread
     /**
      * Wysyła do klienta informację natychmiast, bez żadnego "szemrania",
      * co jest użyteczne na przykład przy krytycznych błędach strumienia
+     *
+     * Wysyła po prostu od razu do strumienia wyjściowego, z pominięciem
+     * buforowania.
+     *
      * @param xml
      */
     public void sendImmediately(String xml)
     {
-        //System.out.println("To: " + xml);
+        System.out.println("To! " + xml);
         output.println(xml);
     }
 

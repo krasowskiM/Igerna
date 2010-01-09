@@ -253,7 +253,7 @@ public class IgernaServer
     {
         // jeśli wiadomość ma puste "to" albo nie jest do naszego
         // serwera, to wysłanie się nie może powieść
-        if (st.to.equals("") || !st.to.equals(IgernaServer.bindHost))
+        if (st.to.equals("") || st.to.equals(IgernaServer.bindHost))
             return false;
 
         Worker recipientWorker = null;
@@ -262,7 +262,7 @@ public class IgernaServer
         // jeśli nie został podany zasób odbiorcy,
         // to musimy przelecieć po wszystkich wątkach i dostać największy
         // priorytet zasobu i wątek do niego przypisany
-        if (recipient.getResourse().equals(""))
+        if (recipient.getResource().equals(""))
         {
             for (Worker w : workerPool)
             {
@@ -270,7 +270,7 @@ public class IgernaServer
                 if (w.clientState.getState() == ClientState.ACTIVE)
                 {
                     // jeśli jego JID odpowiada JIDowi odbiorcy
-                    if (w.clientJID.equals(recipient) && (w.clientResourcePriority > tmp))
+                    if (w.clientJID.equalsNoResource(recipient) && (w.clientResourcePriority > tmp))
                     {
                         recipientWorker = w;
                         tmp = w.clientResourcePriority;                        
@@ -381,7 +381,11 @@ public class IgernaServer
             System.out.println(ex.getMessage());
         }*/
 
-        System.out.println(Iq.ServiceUnavaliableError("someid"));
+        //System.out.println(Iq.ServiceUnavaliableError("someid"));
+        JID j1 = new JID("ktos@127.0.0.1");
+        JID j2 = new JID("ktos@127.0.0.1/foo");
+
+        System.out.println(j1.equals(j2));
 
         System.exit(0);
     }

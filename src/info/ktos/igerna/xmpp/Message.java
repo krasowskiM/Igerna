@@ -23,6 +23,7 @@ package info.ktos.igerna.xmpp;
 
 import java.io.ByteArrayInputStream;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 /**
@@ -41,35 +42,54 @@ public class Message extends Stanza
 
         try
         {
-            xmlnode = xmldoc.createElement("iq");
+            Element xmlelem = xmldoc.createElement("message");
 
             if (!this.from.equals(""))
-                xmlnode.appendChild(createAttributeValue("from", this.from));
+                xmlelem.setAttribute("from", this.from);
 
             if (!this.to.equals(""))
-                xmlnode.appendChild(createAttributeValue("to", this.to));
+                xmlelem.setAttribute("to", this.to);
 
             if (!this.id.equals(""))
-                xmlnode.appendChild(createAttributeValue("id", this.id));
-
-            if (!this.type.equals(""))
-                xmlnode.appendChild(createAttributeValue("type", this.type));
+                xmlelem.setAttribute("id", this.id);
 
             if (!this.lang.equals(""))
-                xmlnode.appendChild(createAttributeValue("lang", this.lang));
+                xmlelem.setAttribute("xml:lang", this.lang);
+
+            if (!this.type.equals(""))
+                xmlelem.setAttribute("type", this.type);
 
             // parsowanie dzieci i przepisywanie ich do xmlnode
             if (!this.childXML.equals(""))
             {
                 Document child = parser.parse(new ByteArrayInputStream(childXML.getBytes()));
-                for (int i = 0; i < child.getChildNodes().getLength(); i++)
-                    xmlnode.appendChild(child.getChildNodes().item(i));
+                xmlelem.appendChild(xmldoc.importNode(child.getFirstChild(), true));
             }
+
+            if (xmlelem == null)
+                System.out.println("here");
+
+
+            // i zrzutowanie elementu na Node
+            xmlnode = xmlelem;
         }
         catch (Exception ex)
         {
             // TODO: co zrobić z wyjątkiem w takim wypadku?
         }
+    }
 
+    /**
+     * Normalnie <message /> jest wysyłane bez from, ale serwer musi to ustawiać
+     * jeśli przesyła dalej, wtedy wywołuje tą metodę
+     *
+     * @param from
+     */
+    public void setFrom(JID from)
+    {
+        this.from = from.toString();
+        Element xmlelem = (Element)xmlnode;
+        xmlelem.setAttribute("from", this.from);
+        xmlnode = xmlelem;
     }
 }

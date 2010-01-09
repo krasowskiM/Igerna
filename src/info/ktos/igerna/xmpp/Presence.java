@@ -50,7 +50,7 @@ public class Presence extends Stanza
     {
         super(n);
 
-        // chora konstrukcja, ale działa
+        // chora konstrukcja, ale działa        
         Element xmlelem = (Element)xmlnode;
         xmlelem.setAttribute("from", from.toString());
         xmlnode = xmlelem;
@@ -62,30 +62,36 @@ public class Presence extends Stanza
 
         try
         {
-            xmlnode = xmldoc.createElement("iq");
+            Element xmlelem = xmldoc.createElement("presence");
 
             if (!this.from.equals(""))
-                xmlnode.appendChild(createAttributeValue("from", this.from));
+                xmlelem.setAttribute("from", this.from);
 
             if (!this.to.equals(""))
-                xmlnode.appendChild(createAttributeValue("to", this.to));
+                xmlelem.setAttribute("to", this.to);
 
             if (!this.id.equals(""))
-                xmlnode.appendChild(createAttributeValue("id", this.id));
-
-            if (!this.type.equals(""))
-                xmlnode.appendChild(createAttributeValue("type", this.type));
+                xmlelem.setAttribute("id", this.id);
 
             if (!this.lang.equals(""))
-                xmlnode.appendChild(createAttributeValue("lang", this.lang));
+                xmlelem.setAttribute("xml:lang", this.lang);
+
+            if (!this.type.equals(""))
+                xmlelem.setAttribute("type", this.type);
 
             // parsowanie dzieci i przepisywanie ich do xmlnode
             if (!this.childXML.equals(""))
             {
                 Document child = parser.parse(new ByteArrayInputStream(childXML.getBytes()));
-                for (int i = 0; i < child.getChildNodes().getLength(); i++)
-                    xmlnode.appendChild(child.getChildNodes().item(i));
+                xmlelem.appendChild(xmldoc.importNode(child.getFirstChild(), true));
             }
+
+            if (xmlelem == null)
+                System.out.println("here");
+
+
+            // i zrzutowanie elementu na Node
+            xmlnode = xmlelem;
         }
         catch (Exception ex)
         {

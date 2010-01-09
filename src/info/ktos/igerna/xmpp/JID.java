@@ -40,7 +40,7 @@ public class JID
         return this.server;
     }
 
-    public String getResourse()
+    public String getResource()
     {
         return this.resource;
     }
@@ -117,6 +117,21 @@ public class JID
             return this.hashCode() == j.hashCode();
         else
             return false;
+    }
+
+    /**
+     * Porównywanie dwóch JID-ów bez uwzględnienia zasobów
+     *
+     * @param j
+     * @return
+     */
+    public boolean equalsNoResource(JID j)
+    {
+        return (
+                (this.userName.equals(j.getUserName())) &&
+                (this.server.equals(j.getServer()))
+               );
+
     }
 
     @Override
