@@ -23,25 +23,43 @@ package info.ktos.igerna.xmpp;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-
 /**
- * Klasa reprezentująca wiadomości typu Iq
+ *
+ * @author Marcin
  */
-public class Iq extends Stanza
-{    
-    public Iq(Node n)
+public class Presence extends Stanza
+{
+    public Presence(Node n)
     {
         super(n);
     }
 
-    public Iq(String to, String from, String id, String type, String lang, String children)
+    /**
+     * Tworzenie <presence /> w którym jest atrybut from
+     *
+     * Normalnie element presence nie zawiera from, gdy jest wysyłany
+     * od klienta do serwera, ale gdy serwer chce go rozesłać innym,
+     * to from jest wymagany
+     *
+     * @param n
+     * @param from
+     */
+    public Presence(Node n, JID from)
+    {
+        super(n);
+        xmlnode.appendChild(createAttributeValue("from", from.toString()));
+    }
+
+    public Presence(String to, String from, String id, String type, String lang, String children)
     {
         super(to, from, id, type, lang, children);
+
         try
-        {            
+        {
             xmlnode = xmldoc.createElement("iq");
 
             if (!this.from.equals(""))
@@ -69,52 +87,24 @@ public class Iq extends Stanza
         }
         catch (Exception ex)
         {
-            // TODO: co zrobić w takim wypadku z wyjątkiem?
+            // TODO: co zrobić z wyjątkiem w takim wypadku?
         }
 
     }
 
-    public Iq(String from, String id, String type)
+    public Presence(String from, String type)
     {
-        this("", from, id, type, "", "");
+        this("", from, "", type, "", "");
     }
 
     @Override
     public String toString()
     {
         // TODO: zmienić na rzeczywistą zamianę xml na stringa, outerXML
-        
-        String result = "<iq type='" + this.type + "' id='" + this.id + "'";
 
-        if (!from.equals("")) result += " from='" + this.from + "'";
-        if (!lang.equals("")) result += " xml:lang='" + this.lang + "'";
-
-        if (!childXML.equals(""))
-            result += ">" + this.childXML + "</iq>";
-        else
-            result += "/>";
+        String result = "<presence type='unavaliable' />";
 
         return result;
     }
 
-    /// metody statyczne odpowiedzialne za tworzenie Iq będących różnymi
-    /// odpowiedziami serwera
-    public static String BindResult(String id, String jid)
-    {
-        return String.format("<iq type='result' id='%1s'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><jid>%2s</jid></bind></iq>", id, jid);
-    }
-
-    public static String GoodResult(String id, String from)
-    {
-        return String.format("<iq type='result' id='%s' from='%s'/>", id, from);
-    }
-
-    public static String ServiceUnavaliableError(String id)
-    {
-        return String.format("<iq type='error' id='%1s'>" +
-                "<error type='cancel'>" +
-                "<service-unavaliable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>" +
-                "</error>" + "</iq>", id);
-
-    }
 }

@@ -285,6 +285,7 @@ class XMPPStreamReader extends Thread
      */
     private void respondClient() throws DOMException
     {
+        // klient przysłał <iq>
         if (xmldoc.getElementsByTagName("iq").getLength() > 0)
         {
             for (int i = 0; i < xmldoc.getElementsByTagName("iq").getLength(); i++)
@@ -308,6 +309,7 @@ class XMPPStreamReader extends Thread
             }
         }
 
+        // klient przysłał <presence>
         if (xmldoc.getElementsByTagName("presence").getLength() > 0)
         {
             // klient wysłał stanzę <presence>
@@ -330,6 +332,17 @@ class XMPPStreamReader extends Thread
                     // w jakimkolwiek innym wypadku w zasadzie trzeba
                     // <presence /> przekierować dalej
 
+                    // jeśli jest ustawiony atrybut to to wyślij do odpowiedniego
+                    // odbiorcy
+                    String to = XmlUtil.getAttributeAsString(item, "to");
+                    if (!to.equals(""))
+                    {
+                        IgernaServer.sendMessage(new JID(to), new Presence(item, parent.clientJID));
+                    }
+                    else
+                    {
+                        IgernaServer.sendToAll(new Presence(item, parent.clientJID));
+                    }
                 }
 
 
@@ -337,9 +350,9 @@ class XMPPStreamReader extends Thread
             }
         }
 
+        // klient przysłał <message>
         if (xmldoc.getElementsByTagName("message").getLength() > 0)
-        {
-            // klient wysłał stanzę <message>
+        {            
             parent.sendToClient("<message from=\"127.0.0.1\" id=\"123\" to=\"ktos@127.0.0.1/foo\"><body>Test!</body></message>");
         }
 
