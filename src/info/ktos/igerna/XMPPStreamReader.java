@@ -302,8 +302,8 @@ class XMPPStreamReader extends Thread
                 }
                 else
                 {
-                    // przesyłamy dalej
-
+                    // przesyłamy dalej, do odpowiedniego odbiorcy
+                    IgernaServer.sendMessage(new JID(to), new Iq(main));
                 }
             }
         }
@@ -314,17 +314,26 @@ class XMPPStreamReader extends Thread
             for (int i = 0; i < xmldoc.getElementsByTagName("presence").getLength(); i++)
             {
                 // hack na Psi, które jest brzydkie i nie wysyła </stream>
-                // jak się wyłącza, a tylko presence unavaliable
+                // jak się wyłącza, a tylko presence unavaliable:
                 // jeżeli presence jest "unavaliable", to rozłącz klienta
                 Node item = xmldoc.getElementsByTagName("presence").item(i);
                 Node presType = item.getAttributes().getNamedItem("type");
                 if ((presType != null) && (presType.getNodeValue().equals("unavailable")))
                 {
                     disconnectClient();
+                    // powiedz innym, że się rozłączyłem
+                    IgernaServer.sendToAll(new Presence(parent.clientJID.toString(), "unavaliable"));
                     break;
                 }
-                // w jakimkolwiek innym wypadku w zasadzie trzeba
-                // <presence> przekierować dalej
+                else
+                {
+                    // w jakimkolwiek innym wypadku w zasadzie trzeba
+                    // <presence /> przekierować dalej
+
+                }
+
+
+
             }
         }
 
