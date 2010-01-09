@@ -79,22 +79,25 @@ public class JID
         {
             // jeśli w JID nie ma zasobu
             this.userName = s.substring(0, at);
-            this.server = s.substring(at);
+            this.server = s.substring(at +1);
             this.resource = "";
         }
         else
         {
             this.userName = s.substring(0, at);
-            this.server = s.substring(at, slash);
-            this.resource = s.substring(slash);
+            this.server = s.substring(at +1, slash);
+            this.resource = s.substring(slash +1);
         }
     }    
 
     @Override
     public String toString()
     {
-        return String.format("%1s@%2s/%3s", this.userName, this.server,
-                this.resource);
+        if (!this.resource.equals(""))
+            return String.format("%1s@%2s/%3s", this.userName, this.server,
+                    this.resource);
+        else
+            return this.toStringWithoutResource();
     }
 
     public String toStringWithoutResource()
