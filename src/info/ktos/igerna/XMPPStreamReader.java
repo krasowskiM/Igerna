@@ -409,12 +409,13 @@ class XMPPStreamReader extends Thread
                 // tworzenie obiektu Message i przepisywanie from przez serwer
                 Message m = new Message(xmldoc.getElementsByTagName("message").item(i));
                 m.setFrom(parent.clientJID);
-                System.out.println("XX: " + m);
+                //System.out.println("XX: " + m);
                 // i wysyłanie
-                if (IgernaServer.sendMessage(new JID(m.to), m))
+                /*if (IgernaServer.sendMessage(new JID(m.to), m))
                     System.out.println("OK");
                 else
-                    System.out.println("NIEOK");
+                    System.out.println("NIEOK");*/
+                IgernaServer.sendMessage(new JID(m.to), m);
             }
         }
 
@@ -460,7 +461,16 @@ class XMPPStreamReader extends Thread
                     // że ok, ale tak naprawdę nic nie zrobi ;-)
                     if (iq.type.equals("get"))
                     {
-                        parent.sendToClient(Vcard.get(iq.from, iq.to, iq.id, new JID(iq.to)));                        
+                        String nickname;
+                        try
+                        {
+                            nickname = IgernaServer.ucp.getGeckos(new JID(iq.to).getUserName());
+                        }
+                        catch (Exception ex)
+                        {
+                            nickname = "";
+                        }
+                        parent.sendToClient(Vcard.get(iq.from, iq.to, iq.id, new JID(iq.to), nickname));
                     }
                     else if (iq.type.equals("set"))
                     {

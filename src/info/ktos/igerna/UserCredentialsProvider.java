@@ -21,6 +21,10 @@
  */
 package info.ktos.igerna;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Klasa udostępniająca sprawdzanie poprawności danych użytkownika
  */
@@ -28,8 +32,39 @@ public class UserCredentialsProvider
 {
     private String username;
     private String password;
+    private String passwdFile;
+    private String[] users;
 
+    /**
+     * Konstruktor, odczyt pliku konfiguracyjnego
+     * 
+     * @param passwdFile
+     */
+    public UserCredentialsProvider(String passwdFile) throws FileNotFoundException, IOException
+    {
+        this.passwdFile = passwdFile;
 
+        FileReader fileReader = new FileReader(passwdFile);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        List<String> l = new ArrayList<String>();
+        String line = null;
+        while ((line = bufferedReader.readLine()) != null)
+        {            
+            if (!line.trim().equals("")) l.add(line);
+        }
+        bufferedReader.close();
+
+        users = l.toArray(new String[l.size()]);
+
+    }
+
+    /**
+     * Sprawdza czy zakodowane danym mechanizmem hasło jest poprawne
+     * 
+     * @param mechanism
+     * @param data
+     * @return
+     */
     public boolean check(String mechanism, String data)
     {
         if (mechanism.equals("PLAIN"))
@@ -40,12 +75,52 @@ public class UserCredentialsProvider
             username = e[1];
             password = e[2];
 
-            return (username.equals("ktos") && password.equals("sim"));
+            try
+            {
+                return (username.equals("ktos") && password.equals("sim"));
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
         else
         {
             return false;
         }
+    }
+
+    /**
+     * Pobiera hasło dla danego użytkownika
+     * 
+     * @param userName
+     * @return
+     * @throws Exception
+     */
+    public String getPassword(String userName) throws Exception
+    {        
+        for (int i = 0; i < users.length; i++)
+        {
+            String[] ud = users[i].split(":");
+            if (ud[0] != null)
+                if (ud[0].equals(userName))
+                    return ud[1];
+        }
+
+        throw new Exception("User not found");        
+    }
+
+    public String getGeckos(String userName) throws Exception
+    {        
+        for (int i = 0; i < users.length; i++)
+        {
+            String[] ud = users[i].split(":");
+            if (ud[0] != null)
+                if (ud[0].equals(userName))
+                    return ud[4];
+        }
+
+        throw new Exception("User not found");        
     }
 
     public String lastUsername()

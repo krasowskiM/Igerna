@@ -29,11 +29,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import info.ktos.igerna.xmpp.*;
-import info.ktos.igerna.xmpp.xeps.Vcard;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
 
 /**
  * Główna klasa aplikacji
@@ -48,6 +44,15 @@ public class IgernaServer
     private static String bindHost;
     private static int bindPort;
 
+    /**
+     * Zmienna okreslająca czy serwer pracuje w trybie debug
+     */
+    public static boolean debug = false;
+
+    /**
+     * Dostawca usług do sprawdzania czy dany użytkownik może być
+     * uwierzytelniony
+     */
     public static UserCredentialsProvider ucp;
 
     /**
@@ -117,101 +122,107 @@ public class IgernaServer
             if (args[0].equals("--version"))
             {
                 IgernaServer.showVersion();
+                System.exit(0);
             }
             else if (args[0].equals("--help"))
             {
                 IgernaServer.showHelp();
+                System.exit(0);
             }
             else if (args[0].equals("--test"))
             {
                 IgernaServer.Test();
+                System.exit(0);
             }
             else if (args[0].startsWith("-C"))
-            {
-                System.out.println("Not implemented");
+            {                
+                configFile = args[0].substring(3);
+                System.out.println("Status: konfiguracja z pliku " + configFile);
             }
             // jeżeli coś, czego nie rozpoznajemy, to pokaż pomoc
             else
             {
                 IgernaServer.showHelp();
+                System.exit(1);
             }
 	}
-        else
+
+        // ładowanie pliku konfiguracyjnego
+        // i wczytywanie go do lokalnej tablicy w klasie Config
+        try
         {
-            // ładowanie pliku konfiguracyjnego
-            // i wczytywanie go do lokalnej tablicy w klasie Config
-            try
-            {
-                config = new Config(configFile);
-                config.readFile();
-            }
-            catch (FileNotFoundException ex)
-            {
-                System.out.println("Błąd: nie znaleziono pliku konfiguracji, przyjmuję wartości domyślne");
-            }
-            catch (IOException ex)
-            {
-                System.out.println("Błąd: nie mogę wczytać konfiguracji, przyjmuję wartości domyślne");
-            }            
-
-            System.out.println("Status: Uruchamianie...");
-            try
-            {
-                // odczyt hosta i portu do którego mam zbindować socket                                
-                bindPort = Integer.parseInt(config.getStringEntry("bind", "port", "5222"));
-                bindHost = config.getStringEntry("bind", "host", "localhost");
-                // podłączanie gniazda
-                SocketAddress sa = new InetSocketAddress(bindHost, bindPort);
-                serv = new ServerSocket();
-                serv.bind(sa);
-            }
-            catch (IOException ex)
-            {
-                System.out.println("Błąd: nie mogę utworzyć gniazda serwera, sprawdź czy nie jest uruchomiona inna instancja");
-                stop();
-            }
-            catch (NumberFormatException ex)
-            {
-                System.out.println("Błąd: podano niepoprawny port do zbindowania");
-                stop();
-            }
-
-            try
-            {
-                ucp = new UserCredentialsProvider();
-            }
-            catch (Exception ex)
-            {
-                System.out.println("Błąd: nie mogę utworzyć providera danych użytkowników");
-            }
-
-            // tworzenie "puli" moich wątków
-            workerPool = new ArrayList<Worker>();
-
-            // główna pętla aplikacji
-            // jeśli ktoś się podłączył, to stwórz nowy wątek typu Worker
-            // i czekaj na połączenia dalej
-            while(!isStopped())
-            {
-                Socket clientSocket = null;
-                try
-                {
-                    clientSocket = serv.accept();
-                }
-                catch (IOException e)
-                {
-                    if(isStopped())
-                    {
-                        //System.out.println("Server Stopped.") ;
-                        return;
-                    }
-                }
-
-                // dodawanie nowego wątku klasy Worker do puli i uruchamianie go
-                workerPool.add(new Worker(clientSocket));
-                workerPool.get(workerPool.size() -1).start();
-            }
+            config = new Config(configFile);
+            config.readFile();
         }
+        catch (FileNotFoundException ex)
+        {
+            System.out.println("Błąd: nie znaleziono pliku konfiguracji, przyjmuję wartości domyślne");
+        }
+        catch (IOException ex)
+        {
+            System.out.println("Błąd: nie mogę wczytać konfiguracji, przyjmuję wartości domyślne");
+        }
+
+        System.out.println("Status: Uruchamianie...");
+        try
+        {
+            // odczyt hosta i portu do którego mam zbindować socket
+            bindPort = Integer.parseInt(config.getStringEntry("bind", "port", "5222"));
+            bindHost = config.getStringEntry("bind", "host", "localhost");
+            // podłączanie gniazda
+            SocketAddress sa = new InetSocketAddress(bindHost, bindPort);
+            serv = new ServerSocket();
+            serv.bind(sa);
+        }
+        catch (IOException ex)
+        {
+            System.out.println("Błąd: nie mogę utworzyć gniazda serwera, sprawdź czy nie jest uruchomiona inna instancja");
+            System.exit(1);
+        }
+        catch (NumberFormatException ex)
+        {
+            System.out.println("Błąd: podano niepoprawny port do zbindowania");
+            System.exit(1);
+        }
+
+        try
+        {
+            ucp = new UserCredentialsProvider(config.getStringEntry("path", "passwd", "passwd"));
+        }
+        catch (Exception ex)
+        {
+            System.out.println("Błąd: nie mogę utworzyć dostawcy danych użytkowników");
+            System.exit(1);
+        }
+
+        // tworzenie "puli" moich wątków
+        workerPool = new ArrayList<Worker>();
+
+        // główna pętla aplikacji
+        // jeśli ktoś się podłączył, to stwórz nowy wątek typu Worker
+        // i czekaj na połączenia dalej
+        while(!isStopped())
+        {
+            Socket clientSocket = null;
+            try
+            {
+                clientSocket = serv.accept();
+            }
+            catch (IOException e)
+            {
+                if (isStopped())
+                {                    
+                    return;
+                }
+            }
+
+            // dodawanie nowego wątku klasy Worker do "puli" i uruchamianie go
+            workerPool.add(new Worker(clientSocket));
+            workerPool.get(workerPool.size() -1).start();
+        }
+
+        System.out.println("Status: zatrzymywanie");
+        System.exit(0);
     }
 
     /**
@@ -219,9 +230,9 @@ public class IgernaServer
      */
     private static void showVersion()
     {      
-        System.out.println("Igerna version 0.1.0.0");
+        System.out.println("Igerna version 0.2.0.0");
 	System.out.println("");
-        System.out.println("Copyright (C) Marcin Badurowicz 2009");
+        System.out.println("Copyright (C) Marcin Badurowicz 2009-2010");
         System.out.println("Licencja GPLv3+: GNU GPL w wersji 3 lub późniejszej");
 	System.out.println("<http://www.gnu.org/licenses/gpl.html>.");
         System.out.println("");
@@ -235,13 +246,13 @@ public class IgernaServer
      */
     private static void showHelp()
     {
-        System.out.println("Igerna version 0.1.0.0");
+        System.out.println("Igerna version 0.2.0.0");
 	System.out.println("");
-        System.out.println("Użycie: java IgernaServer.class [--version] [--help] [-C <plik>]");
+        System.out.println("Użycie: java IgernaServer.class [--version] [--help] [-C=<plik>]");
         System.out.println("");
         System.out.println("  --version - pokazuje informacje o wersji serwera");
         System.out.println("  --help - pokazuje tą informację");
-        System.out.println("  -C <plik> - ładuje konfigurację z podanego pliku, domyślnie");
+        System.out.println("  -C=<plik> - ładuje konfigurację z podanego pliku, domyślnie");
         System.out.println("              jest to plik igerna.conf");
         System.out.println("");
     }

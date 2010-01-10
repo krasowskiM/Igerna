@@ -32,9 +32,9 @@ import info.ktos.igerna.xmpp.JID;
  */
 public class Vcard
 {
-    public static Iq get(String to, String from, String id, JID owner)
+    public static Iq get(String to, String from, String id, JID owner, String nickname)
     {
-        String vcard = "<vCard xmlns='vcard-temp'><NICKNAME>" + owner.getUserName() + "</NICKNAME></vCard>";
+        String vcard = "<vCard xmlns='vcard-temp'><NICKNAME>" + nickname + "</NICKNAME></vCard>";
         return new Iq(to, from, id, "result", "", vcard);
     }
 }
