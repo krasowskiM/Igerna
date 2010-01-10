@@ -22,15 +22,12 @@
 package info.ktos.igerna;
 
 import info.ktos.igerna.xmpp.*;
-import info.ktos.igerna.xmpp.xeps.SoftwareVersion;
-import info.ktos.igerna.xmpp.xeps.Vcard;
+import info.ktos.igerna.xmpp.xeps.*;
 import java.io.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
 
 /**
  * Klasa odpowiedzialna za odczytywanie z wejściowego strumienia XMPP
@@ -115,132 +112,26 @@ class XMPPStreamReader extends Thread
 
                         if (parent.clientState.getState() == ClientState.CONNECTING)
                         {
-                            // uznajemy, że to co klient wysłał to prawdopodobnie będzie
-                            // początek strumienia
-                            clientStreamStart = cltext;
-
-                            cltext = cltext + Stream.end();
-                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
-                            xmldoc = parser.parse(xmlis);
-                            
-                            // TODO: sprawdzanie wersji!                            
-
-                            serverStreamStart = Stream.start(IgernaServer.getBindHost(), Stream.generateId());
-
-                            // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
-                            // zatem odpowiadamy naszym streamem oraz SASLem
-                            parent.sendToClient(serverStreamStart);
-                            parent.sendToClient(Stream.SASLfeatures(IgernaServer.getSASLMechanisms()));
-
-                            // i ustawiamy, że najwyraźniej klient jest w trakcie autoryzacji
-                            parent.clientState.setState(ClientState.AUTHORIZING);
-
-                            xmldoc = null;
-                            xmlis.close();
+                            clientConnecting();
                         }
                         // jeśli klient jest w trakcie autoryzacji, to czekamy na jego <auth>
                         else if (parent.clientState.getState() == ClientState.AUTHORIZING)
                         {
-                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
-                            xmldoc = parser.parse(xmlis);
-
-                            // TODO: błąd, jeśli klient nie wyśle tego, co trzeba
-                            // na przykład wyśle jabber:iq:auth bo nie obsługuje SASL
-                            // NullPointerException
-
-                            // wyszukiwanie mechanizmu uwierzytelnienia
-                            Node mechanism = xmldoc.getElementsByTagName("auth").item(0).getAttributes().getNamedItem("mechanism");
-                            if (mechanism != null)
-                                if (IgernaServer.ucp.check(mechanism.getNodeValue(), xmldoc.getElementsByTagName("auth").item(0).getTextContent()))
-                                {
-                                    // logowanie się powiodło, wyślij <success/>
-                                    parent.sendToClient(Stream.SASLsuccess());
-                                    
-                                    parent.clientJID = new JID(IgernaServer.ucp.lastUsername(), IgernaServer.getBindHost(), "");
-
-                                    // idziemy do następnego stanu
-                                    parent.clientState.setState(ClientState.AUTHORIZED);
-                                }
-                                else
-                                {
-                                    // tutaj powinny być wyjątki i w zależności od
-                                    // wyjątku różne rodzaje błędów SASL
-                                    parent.sendImmediately(StreamError.SASLnotauthorized());
-
-                                    // i rozłączamy się
-                                    this.stopWorking();
-                                    parent.stopWorking();
-                                }
-
-                            xmldoc = null;
-                            xmlis.close();
+                            clientAuthorizing();
                         }
                         else if (parent.clientState.getState() == ClientState.AUTHORIZED)
                         {
-                            // tutaj klient wysyła drugiego <stream>, na którego będziemy
-                            // odpowiadać naszym drugiem streamem :-)
-                            
-                            parent.sendToClient(serverStreamStart);
-                            parent.sendToClient(Stream.features());
-
-                            // powiodło się? no to klient pewnie się będzie bindował do zasobu
-                            parent.clientState.setState(ClientState.BINDING);
+                            clientAuthorized();
                         }
                         // klient się binduje do zasobu
                         else if (parent.clientState.getState() == ClientState.BINDING)
                         {
-                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
-                            xmldoc = parser.parse(xmlis);
-                            
-                            if (xmldoc.getElementsByTagName("iq").getLength() == 1)
-                            {
-                                String bindid = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
-
-                                // ustalanie nowego zasobu
-                                // TODO: powinno być brane z XML, a nie generowane przez serwer
-                                String newres = "foo";
-                                parent.clientJID.setResource(newres);
-                                parent.clientResourcePriority = 5;
-
-                                // wysyłanie do klienta potwierdzenia
-                                parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
-
-                                parent.clientState.setState(ClientState.BOUND);
-                            }
-                            else
-                            {
-                                // błąd wewnętrzny jeśli klient zechciał coś innnego niż
-                                // binding do zasobu
-                                parent.sendToClient(StreamError.internalServerError2());
-                            }
-
-                            xmldoc = null;
-                            xmlis.close();                            
+                            clientBinding();
                         }
                         // klient się podłączył do zasobu, będzie chciał ustanowić sesję
                         else if (parent.clientState.getState() == ClientState.BOUND)
                         {
-                            InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
-                            xmldoc = parser.parse(xmlis);
-
-                            if (xmldoc.getElementsByTagName("iq").getLength() == 1)
-                            {
-                                String id = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
-
-                                // wysyłanie do klienta potwierdzenia
-                                parent.sendToClient(Iq.GoodResult(id, IgernaServer.getBindHost()));
-
-                                parent.clientState.setState(ClientState.ACTIVE);
-                            }
-                            else
-                            {
-                                // błąd wewnętrzny jeśli klient zechciał coś innnego niż
-                                // sesja ;-)
-                                parent.sendToClient(StreamError.internalServerError2());
-                            }
-
-                            xmldoc = null;
-                            xmlis.close();
+                            clientBound();
                         }
                         // a jeśli klient jest aktywny i coś wysyła, to my parsujemy żądanie
                         // i robimy co trzeba
@@ -287,6 +178,146 @@ class XMPPStreamReader extends Thread
                 parent.stopWorking();
             }
         }
+    }
+
+    /**
+     * Obsługa stanu BOUND u klienta, obsługa podłączenia do sesji
+     * 
+     * @throws IOException
+     * @throws SAXException
+     * @throws DOMException
+     */
+    private void clientBound() throws IOException, SAXException, DOMException
+    {
+        InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+        xmldoc = parser.parse(xmlis);
+        if (xmldoc.getElementsByTagName("iq").getLength() == 1)
+        {
+            String id = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
+            // wysyłanie do klienta potwierdzenia
+            parent.sendToClient(Iq.GoodResult(id, IgernaServer.getBindHost()));
+            parent.clientState.setState(ClientState.ACTIVE);
+        }
+        else
+        {
+            // błąd wewnętrzny jeśli klient zechciał coś innnego niż
+            // sesja ;-)
+            parent.sendToClient(StreamError.internalServerError2());
+        }
+        xmldoc = null;
+        xmlis.close();
+    }
+
+    /**
+     * Obsługa stanu Bindind, podłączenia do zasobu
+     *
+     * @throws SAXException
+     * @throws IOException
+     * @throws DOMException
+     */
+    private void clientBinding() throws SAXException, IOException, DOMException
+    {
+        InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+        xmldoc = parser.parse(xmlis);
+        if (xmldoc.getElementsByTagName("iq").getLength() == 1)
+        {
+            String bindid = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
+            // ustalanie nowego zasobu
+            // TODO: powinno być brane z XML, a nie generowane przez serwer
+            String newres = "foo";
+            parent.clientJID.setResource(newres);
+            parent.clientResourcePriority = 5;
+            // wysyłanie do klienta potwierdzenia
+            parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
+            parent.clientState.setState(ClientState.BOUND);
+        }
+        else
+        {
+            // błąd wewnętrzny jeśli klient zechciał coś innnego niż
+            // binding do zasobu
+            parent.sendToClient(StreamError.internalServerError2());
+        }
+        xmldoc = null;
+        xmlis.close();
+    }
+
+    /**
+     * Obsługa stanu Authorized
+     */
+    private void clientAuthorized()
+    {
+        // tutaj klient wysyła drugiego <stream>, na którego będziemy
+        // odpowiadać naszym drugiem streamem :-)
+        parent.sendToClient(serverStreamStart);
+        parent.sendToClient(Stream.features());
+        // powiodło się? no to klient pewnie się będzie bindował do zasobu
+        parent.clientState.setState(ClientState.BINDING);
+    }
+
+    /**
+     * Obsłuta stanu Authorizing, uwierzytelnianie użytkownika
+     *
+     * @throws DOMException
+     * @throws IOException
+     * @throws SAXException
+     */
+    private void clientAuthorizing() throws DOMException, IOException, SAXException
+    {
+        InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+        xmldoc = parser.parse(xmlis);
+        // TODO: błąd, jeśli klient nie wyśle tego, co trzeba
+        // na przykład wyśle jabber:iq:auth bo nie obsługuje SASL
+        // NullPointerException
+        // wyszukiwanie mechanizmu uwierzytelnienia
+        Node mechanism = xmldoc.getElementsByTagName("auth").item(0).getAttributes().getNamedItem("mechanism");
+        if (mechanism != null)
+        {
+            if (IgernaServer.ucp.check(mechanism.getNodeValue(), xmldoc.getElementsByTagName("auth").item(0).getTextContent()))
+            {
+                // logowanie się powiodło, wyślij <success/>
+                parent.sendToClient(Stream.SASLsuccess());
+                parent.clientJID = new JID(IgernaServer.ucp.lastUsername(), IgernaServer.getBindHost(), "");
+                // idziemy do następnego stanu
+                parent.clientState.setState(ClientState.AUTHORIZED);
+            }
+            else
+            {
+                // tutaj powinny być wyjątki i w zależności od
+                // wyjątku różne rodzaje błędów SASL
+                parent.sendImmediately(StreamError.SASLnotauthorized());
+                // i rozłączamy się
+                this.stopWorking();
+                parent.stopWorking();
+            }
+        }
+        xmldoc = null;
+        xmlis.close();
+    }
+
+    /**
+     * Obsługa stanu Connecting
+     * 
+     * @throws SAXException
+     * @throws IOException
+     */
+    private void clientConnecting() throws SAXException, IOException
+    {
+        // uznajemy, że to co klient wysłał to prawdopodobnie będzie
+        // początek strumienia
+        clientStreamStart = cltext;
+        cltext = cltext + Stream.end();
+        InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
+        xmldoc = parser.parse(xmlis);
+        // TODO: sprawdzanie wersji!
+        serverStreamStart = Stream.start(IgernaServer.getBindHost(), Stream.generateId());
+        // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
+        // zatem odpowiadamy naszym streamem oraz SASLem
+        parent.sendToClient(serverStreamStart);
+        parent.sendToClient(Stream.SASLfeatures(IgernaServer.getSASLMechanisms()));
+        // i ustawiamy, że najwyraźniej klient jest w trakcie autoryzacji
+        parent.clientState.setState(ClientState.AUTHORIZING);
+        xmldoc = null;
+        xmlis.close();
     }
 
     /**
