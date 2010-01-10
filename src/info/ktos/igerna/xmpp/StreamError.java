@@ -69,6 +69,16 @@ public class StreamError
         return SASLerror("<not-authorized/>");
     }
 
+    /**
+     * Nieobsługiwana stanza przez serwer
+     * 
+     * @return
+     */
+    public static String unsupportedStanzaType()
+    {
+        return err2("<unsupported-stanza-type />");
+    }
+
     private static String err(String err)
     {
         return String.format("%s%s<stream:error>%s</stream:error>%s",

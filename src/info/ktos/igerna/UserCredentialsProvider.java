@@ -35,6 +35,11 @@ public class UserCredentialsProvider
     private String passwdFile;
     private String[] users;
 
+    public String[] getUserData()
+    {
+        return users;
+    }
+
     /**
      * Konstruktor, odczyt pliku konfiguracyjnego
      * 

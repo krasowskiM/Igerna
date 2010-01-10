@@ -222,9 +222,22 @@ class XMPPStreamReader extends Thread
         if (xmldoc.getElementsByTagName("iq").getLength() == 1)
         {
             String bindid = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
+            
             // ustalanie nowego zasobu
-            // TODO: powinno być brane z XML, a nie generowane przez serwer
-            String newres = "foo";
+            String newres = Stream.generateId();
+            try
+            {
+                if (xmldoc.getElementsByTagName("resource").getLength() == 1)
+                {
+                    newres = xmldoc.getElementsByTagName("resource").item(0).getTextContent();
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+
+            // TODO: a jeśli zasób taki już istnieje?
+
             parent.clientJID.setResource(newres);
             parent.clientResourcePriority = 5;
             // wysyłanie do klienta potwierdzenia
@@ -265,10 +278,22 @@ class XMPPStreamReader extends Thread
     {
         InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
         xmldoc = parser.parse(xmlis);
-        // TODO: błąd, jeśli klient nie wyśle tego, co trzeba
-        // na przykład wyśle jabber:iq:auth bo nie obsługuje SASL
-        // NullPointerException
+
         // wyszukiwanie mechanizmu uwierzytelnienia
+        if (xmldoc.getElementsByTagName("auth").getLength() == 0)
+        {
+            // błąd, jeśli klient nie wyśle tego, co trzeba
+            // na przykład wyśle jabber:iq:auth bo nie obsługuje SASL
+            // NullPointerException - jeśli tak, to znaczy, że nie
+            // wspiera XMPP, a np. tylko starego Jabbera, więc przykro mi,
+            // ale się rozłączam
+
+            parent.sendImmediately(StreamError.unsupportedStanzaType());
+            this.stopWorking();
+            parent.stopWorking();
+            return;
+        }
+
         Node mechanism = xmldoc.getElementsByTagName("auth").item(0).getAttributes().getNamedItem("mechanism");
         if (mechanism != null)
         {
@@ -308,7 +333,11 @@ class XMPPStreamReader extends Thread
         cltext = cltext + Stream.end();
         InputStream xmlis = new ByteArrayInputStream(cltext.getBytes());
         xmldoc = parser.parse(xmlis);
-        // TODO: sprawdzanie wersji!
+
+        // tutaj można by pomyśleć nad sprawdzaniem wersji protokołu,
+        // ale, że nie ma żadnej oprócz 1.0, to to chyba nie ma zbytnio
+        // sensu
+
         serverStreamStart = Stream.start(IgernaServer.getBindHost(), Stream.generateId());
         // jeżeli jest podłączony i coś wysyła, to pewnie początek streamu
         // zatem odpowiadamy naszym streamem oraz SASLem
@@ -365,6 +394,9 @@ class XMPPStreamReader extends Thread
         // klient przysłał <presence>
         if (xmldoc.getElementsByTagName("presence").getLength() > 0)
         {
+            // TODO: presence type subsribe/subscribed/unsubscribe
+            // trzeba odpowiednio obsługiwać
+
             // klient wysłał stanzę <presence>
             for (int i = 0; i < xmldoc.getElementsByTagName("presence").getLength(); i++)
             {
@@ -483,7 +515,27 @@ class XMPPStreamReader extends Thread
 
                     if (xmlns.equals("jabber:iq:roster"))
                     {
-                        parent.sendToClient(Iq.ServiceUnavaliableError(iq.id));
+                        // generowanie rostera na podstawie listy użytkowników
+                        // serwera - każdy ma każdego na liście kontaktów
+                        String roster = "<query xmlns='jabber:iq:roster'>";
+
+                        String[] rosteritems = IgernaServer.ucp.getUserData();
+                        for (int j = 0; j < rosteritems.length; j++)
+                        {
+                            String[] s = rosteritems[j].split(":");
+                            roster += "<item jid='" + s[0] + "@"
+                                    + IgernaServer.getBindHost() + "' name='"
+                                    + s[4] + "' subscription='both' />";
+                        }
+
+                        roster += "</query>";
+
+                        Iq iqroster = new Iq(iq.from, "", iq.id, "result", "", roster);
+
+                        // TODO: przesłanie presence każdego z użytkowników
+                        // rostera
+
+                        parent.sendToClient(iqroster);
                     }
                     else if (xmlns.equals("http://jabber.org/protocol/disco#info"))
                     {

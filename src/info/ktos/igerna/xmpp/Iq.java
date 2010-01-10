@@ -73,8 +73,7 @@ public class Iq extends Stanza
         }
         catch (Exception ex)
         {
-            // TODO: co zrobić w takim wypadku z wyjątkiem?
-            System.out.println(ex.getMessage());
+            System.out.println("Błąd: " + ex.getMessage() + " (in stanza!)");
         }
 
     }
@@ -86,18 +85,37 @@ public class Iq extends Stanza
 
     /// metody statyczne odpowiedzialne za tworzenie Iq będących różnymi
     /// odpowiedziami serwera
-    // TODO: przenieść do czegoś w rodzaju IqFactory oraz zmienić na tworzenie obiektów
-    // a nie na zwracanie stringów
+
+    /**
+     * Tworzy wiadomość o poprawnym rezultacie podłaczenia do zasobu
+     * 
+     * @param id
+     * @param jid
+     * @return
+     */
     public static Iq BindResult(String id, JID jid)
     {
         return new Iq("", "", id, "result", "", "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'><jid>" + jid.toString() + "</jid></bind>");
     }
 
+    /**
+     * Tworzy wiadomość potwierdzającą wykonanie operacji
+     * 
+     * @param id
+     * @param from
+     * @return
+     */
     public static Iq GoodResult(String id, String from)
     {
         return new Iq(from, id, "result");
     }
 
+    /**
+     * Tworzy wiadomość błędu, że taka usługa nie jest dostępna
+     * 
+     * @param id
+     * @return
+     */
     public static Iq ServiceUnavaliableError(String id)
     {
         return new Iq("", "", id, "error", "",

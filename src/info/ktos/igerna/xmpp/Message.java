@@ -75,7 +75,7 @@ public class Message extends Stanza
         }
         catch (Exception ex)
         {
-            // TODO: co zrobić z wyjątkiem w takim wypadku?
+            System.out.println("Błąd: " + ex.getMessage() + " (in stanza!)");
         }
     }
 
