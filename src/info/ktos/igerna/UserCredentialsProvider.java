@@ -77,7 +77,8 @@ public class UserCredentialsProvider
 
             try
             {
-                return (username.equals("ktos") && password.equals("sim"));
+                //return (username.equals("ktos") && password.equals("sim"));
+                return password.equals(getPassword(username));
             }
             catch (Exception ex)
             {
