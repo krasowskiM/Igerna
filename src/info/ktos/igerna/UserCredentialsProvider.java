@@ -64,14 +64,74 @@ public class UserCredentialsProvider
         }
     }
 
+    /**
+     * Pobranie listy wszystkich użytkowników
+     * 
+     * @return
+     */
     public ArrayList<String[]> getUserData()
     {
         return users;
     }
 
+    /**
+     * Usunięcie użytkownika z listy
+     * 
+     * @param userName
+     */
     public void removeUser(String userName)
-    {
+    {        
+        users.remove(findUser(userName));
+    }
 
+    private int findUser(String userName)
+    {
+        int i = 0;
+        for (String[] strings : users)
+        {
+            if (strings[0] != null && strings[0].equals(userName))
+            {
+                break;
+            }
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * Zmiana istniejącego użytkownika na liście
+     *
+     * @param userName
+     * @param newUserName
+     * @param newPassword
+     * @param newGeckos
+     */
+    public void changeUser(String userName, String newUserName, String newPassword, String newGeckos)
+    {
+        int i = findUser(userName);
+
+        String[] dat = users.get(i);
+
+        if (!newUserName.equals(""))
+            dat[0] = newUserName;
+        if (!newPassword.equals(""))
+            dat[1] = newPassword;
+        if (!newGeckos.equals(""))
+            dat[4] = newGeckos;
+
+        users.set(i, dat);
+    }
+
+    /**
+     * Dodanie nowego użytkownika do listy
+     * 
+     * @param userName
+     * @param newPassword
+     * @param newGeckos
+     */
+    public void addUser(String userName, String newPassword, String newGeckos)
+    {        
+        users.add(new String[] { userName, md5(newPassword), "0", "0", newGeckos, "/home/" + userName, "/bin/bash" });
     }
 
     /**
@@ -93,6 +153,36 @@ public class UserCredentialsProvider
                 users.add(line.split(":"));
         }
         bufferedReader.close();
+    }
+
+    private String arrayjoin(String[] arr, String separator)
+    {
+        String result = "";
+
+        for (String s : arr)
+        {
+            result = s + separator;
+        }
+
+        return result.substring(0, result.length() - separator.length());
+    }
+
+    /**
+     * Zapis zmodyfikowanej listy użytkowników do pliku
+     */
+    public void SaveToFile() throws IOException
+    {
+        FileWriter fw = new FileWriter(this.passwdFile);
+        BufferedWriter bw = new BufferedWriter(fw);
+
+        for (String[] strings : users)
+        {
+            bw.write(arrayjoin(strings, ":"));
+            bw.newLine();
+        }
+
+        bw.close();
+        fw.close();
     }
 
     /**
