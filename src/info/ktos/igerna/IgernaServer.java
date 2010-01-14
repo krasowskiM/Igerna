@@ -21,6 +21,7 @@
  */
 package info.ktos.igerna;
 
+import com.sun.jmx.remote.internal.ClientCommunicatorAdmin;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -367,6 +368,24 @@ public class IgernaServer
         }
 
         return result;
+    }
+
+    /**
+     * Zwraca, czy taki JID o takim zasobie jest już podłączony do serwera
+     * 
+     * @param j
+     * @return
+     */
+    public static boolean isResourceConnected(JID j)
+    {
+        for (Worker worker : workerPool)
+        {
+            if (worker.clientState.getState() == ClientState.ACTIVE)
+                if (worker.clientJID.equals(j))
+                    return true;
+        }
+
+        return false;
     }
 
     /**

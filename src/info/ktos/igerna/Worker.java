@@ -22,6 +22,7 @@
 package info.ktos.igerna;
 
 import info.ktos.igerna.xmpp.JID;
+import info.ktos.igerna.xmpp.Presence;
 import info.ktos.igerna.xmpp.Stanza;
 import java.io.*;
 import java.net.Socket;
@@ -41,7 +42,7 @@ class Worker extends Thread
 
     public JID clientJID;
     public ClientState clientState;
-    public int clientResourcePriority = 0;
+    public int clientResourcePriority = 0;    
 
     /**
      * Zatrzymywanie pracy wątku

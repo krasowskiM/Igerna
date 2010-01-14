@@ -43,7 +43,7 @@ class XMPPStreamReader extends Thread
     private Worker parent;
     private char[] cbuf;
     private String clientStreamStart;
-    private String serverStreamStart;
+    private String serverStreamStart;    
 
     public void stopWorking()
     {
@@ -222,7 +222,9 @@ class XMPPStreamReader extends Thread
         if (xmldoc.getElementsByTagName("iq").getLength() == 1)
         {
             String bindid = xmldoc.getElementsByTagName("iq").item(0).getAttributes().getNamedItem("id").getTextContent();
-            
+
+            Iq org = new Iq(xmldoc.getElementsByTagName("iq").item(0));
+
             // ustalanie nowego zasobu
             String newres = Stream.generateId();
             try
@@ -235,14 +237,21 @@ class XMPPStreamReader extends Thread
             catch (Exception ex)
             {
             }
-
-            // TODO: a jeśli zasób taki już istnieje?
-
+            
             parent.clientJID.setResource(newres);
             parent.clientResourcePriority = 5;
-            // wysyłanie do klienta potwierdzenia
-            parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
-            parent.clientState.setState(ClientState.BOUND);
+            
+            if (IgernaServer.isResourceConnected(parent.clientJID))
+            {
+                // jeśli zasób już jest podłączony, mamy konflikt
+                parent.sendToClient(new Iq("", "", bindid, "error", "", org.childXML + StreamError.resourceConflict()));
+            }
+            else
+            {
+                // wysyłanie do klienta potwierdzenia
+                parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
+                parent.clientState.setState(ClientState.BOUND);
+            }
         }
         else
         {
@@ -394,31 +403,19 @@ class XMPPStreamReader extends Thread
         // klient przysłał <presence>
         if (xmldoc.getElementsByTagName("presence").getLength() > 0)
         {
-            // TODO: presence type subsribe/subscribed/unsubscribe
-            // trzeba odpowiednio obsługiwać
-
             // klient wysłał stanzę <presence>
             for (int i = 0; i < xmldoc.getElementsByTagName("presence").getLength(); i++)
             {
-                // hack na Psi, które jest brzydkie i nie wysyła </stream>
-                // jak się wyłącza, a tylko presence unavaliable:
-                // jeżeli presence jest "unavaliable", to rozłącz klienta
+                
                 Node item = xmldoc.getElementsByTagName("presence").item(i);
                 Node presType = item.getAttributes().getNamedItem("type");
-                if ((presType != null) && (presType.getNodeValue().equals("unavailable")))
-                {
-                    disconnectClient();
-                    // powiedz innym, że się rozłączyłem
-                    IgernaServer.sendToAll(new Presence(parent.clientJID.toString(), "unavaliable"));
-                    break;
-                }
-                else
-                {
-                    // w jakimkolwiek innym wypadku w zasadzie trzeba
-                    // <presence /> przekierować dalej
 
-                    // jeśli jest ustawiony atrybut to to wyślij do odpowiedniego
-                    // odbiorcy
+                if (presType == null)
+                {
+                    // brak typu - normalne <presence>, rozsłyamy
+
+                    // jeśli jest ustawiony atrybut "to" to wyślij do
+                    //  odpowiedniego odbiorcy
                     String to = XmlUtil.getAttributeAsString(item, "to");
                     if (!to.equals(""))
                     {
@@ -428,6 +425,33 @@ class XMPPStreamReader extends Thread
                     {
                         IgernaServer.sendToAll(new Presence(item, parent.clientJID));
                     }
+
+                    break;
+                }
+
+                String presTypeV = presType.getNodeValue();
+
+                if (presTypeV.equals("unavailable"))
+                {
+                    // hack na Psi, które jest brzydkie i nie wysyła </stream>
+                    // jak się wyłącza, a tylko presence unavaliable:
+                    // jeżeli presence jest "unavaliable", to rozłącz klienta
+                    disconnectClient();
+                    // powiedz innym, że się rozłączyłem
+                    IgernaServer.sendToAll(new Presence(parent.clientJID.toString(), "unavailable"));
+                    break;
+                }
+                else if (presTypeV.equals("subscribe") || presTypeV.equals("subscribed") || presTypeV.equals("unsubscribe") || presTypeV.equals("unsubscribed"))
+                {
+                    // presence type subsribe/subscribed/unsubscribe
+                    // trzeba odpowiednio obsługiwać - w naszym przypadku
+                    // będziemy ignorować, bo roster powinien być niezmienny
+                    break;
+                }
+                else
+                {
+                    // nieznany typ, ignorujemy
+                    // TODO: typ "probe"
                 }
             }
         }
@@ -459,7 +483,7 @@ class XMPPStreamReader extends Thread
             parent.stopWorking();
         }*/
 
-        // TODO: jeśli nierozpoznany XML, to co robimy?
+        // jeśli nierozpoznany XML, to go ignorujemy po cichu
     }
 
     private void disconnectClient()
@@ -531,11 +555,14 @@ class XMPPStreamReader extends Thread
                         roster += "</query>";
 
                         Iq iqroster = new Iq(iq.from, "", iq.id, "result", "", roster);
-
-                        // TODO: przesłanie presence każdego z użytkowników
-                        // rostera
-
+                       
                         parent.sendToClient(iqroster);
+
+                        // wysyłamy presence z typem probe do wszystkich
+                        // jak zdefiniowano w RFC 3921 5.1.1
+                        //IgernaServer.sendToAll(new Presence("", parent.clientJID.toString(), "", "probe", "", ""));
+
+
                     }
                     else if (xmlns.equals("http://jabber.org/protocol/disco#info"))
                     {
