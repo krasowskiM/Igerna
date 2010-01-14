@@ -36,7 +36,7 @@ public class UserCredentialsProvider
     private String username;
     private String password;
     private String passwdFile;
-    private String[] users;
+    private ArrayList<String[]> users;
 
     /**
      * Zwraca sumę MD5 stringa
@@ -64,9 +64,14 @@ public class UserCredentialsProvider
         }
     }
 
-    public String[] getUserData()
+    public ArrayList<String[]> getUserData()
     {
         return users;
+    }
+
+    public void removeUser(String userName)
+    {
+
     }
 
     /**
@@ -80,16 +85,14 @@ public class UserCredentialsProvider
 
         FileReader fileReader = new FileReader(passwdFile);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
-        List<String> l = new ArrayList<String>();
+        users = new ArrayList<String[]>();
         String line = null;
         while ((line = bufferedReader.readLine()) != null)
         {            
-            if (!line.trim().equals("")) l.add(line);
+            if (!line.trim().equals(""))
+                users.add(line.split(":"));
         }
         bufferedReader.close();
-
-        users = l.toArray(new String[l.size()]);
-
     }
 
     /**
@@ -110,12 +113,12 @@ public class UserCredentialsProvider
             password = e[2];
 
             try
-            {
-                //return (username.equals("ktos") && password.equals("sim"));                
+            {                
                 return UserCredentialsProvider.md5(password).equals(getPassword(username));
             }
             catch (Exception ex)
             {
+                // wyjątek znaczy, że chyba użytkownika nie znaleziono
                 return false;
             }
         }
@@ -133,10 +136,9 @@ public class UserCredentialsProvider
      * @throws Exception
      */
     public String getPassword(String userName) throws Exception
-    {        
-        for (int i = 0; i < users.length; i++)
+    {
+        for (String[] ud : users)
         {
-            String[] ud = users[i].split(":");
             if (ud[0] != null)
                 if (ud[0].equals(userName))
                     return ud[1];
@@ -145,11 +147,17 @@ public class UserCredentialsProvider
         throw new Exception("User not found");        
     }
 
+    /**
+     * Pobiera nazwę użytkownika (geckos) dla danego użytkownika
+     * 
+     * @param userName
+     * @return
+     * @throws Exception
+     */
     public String getGeckos(String userName) throws Exception
     {        
-        for (int i = 0; i < users.length; i++)
+        for (String[] ud : users)
         {
-            String[] ud = users[i].split(":");
             if (ud[0] != null)
                 if (ud[0].equals(userName))
                     return ud[4];

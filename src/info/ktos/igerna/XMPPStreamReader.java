@@ -24,6 +24,7 @@ package info.ktos.igerna;
 import info.ktos.igerna.xmpp.*;
 import info.ktos.igerna.xmpp.xeps.*;
 import java.io.*;
+import java.util.ArrayList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.*;
@@ -546,13 +547,12 @@ class XMPPStreamReader extends Thread
                         // serwera - każdy ma każdego na liście kontaktów
                         String roster = "<query xmlns='jabber:iq:roster'>";
 
-                        String[] rosteritems = IgernaServer.ucp.getUserData();
-                        for (int j = 0; j < rosteritems.length; j++)
+                        ArrayList<String[]> rosteritems = IgernaServer.ucp.getUserData();
+                        for (String[] strings : rosteritems)
                         {
-                            String[] s = rosteritems[j].split(":");
-                            roster += "<item jid='" + s[0] + "@"
+                            roster += "<item jid='" + strings[0] + "@"
                                     + IgernaServer.getBindHost() + "' name='"
-                                    + s[4] + "' subscription='both' />";
+                                    + strings[4] + "' subscription='both' />";
                         }
 
                         roster += "</query>";
@@ -570,6 +570,7 @@ class XMPPStreamReader extends Thread
                     else if (xmlns.equals("http://jabber.org/protocol/disco#info"))
                     {
                         // service discovery (XEP-0030)
+                        // TODO: obsługa service discovery
                     }
                     else if (xmlns.equals("jabber:iq:version"))
                     {
