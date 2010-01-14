@@ -30,8 +30,7 @@ import java.util.regex.*;
  */
 public class Config
 {
-    private String path;
-    private BufferedReader rdr;
+    private String path;    
     private ArrayList<String> lines;
 
     /**
@@ -169,17 +168,18 @@ public class Config
      */
     public void readFile() throws FileNotFoundException, IOException
     {
-        FileReader fileReader = new FileReader(path);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        FileReader fr = new FileReader(path);
+        BufferedReader br = new BufferedReader(fr);
         lines = new ArrayList<String>();
         String line = null;
-        while ((line = bufferedReader.readLine()) != null)
+        while ((line = br.readLine()) != null)
         {
             // ignorowanie komentarzy i pustych linii
             if (!line.startsWith("#") && !line.trim().equals(""))
                 lines.add(line);
         }
-        bufferedReader.close();        
+        br.close();
+        fr.close();
     }
 
     /**
