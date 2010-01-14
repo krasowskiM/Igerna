@@ -22,6 +22,9 @@
 package info.ktos.igerna;
 
 import java.io.*;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +37,32 @@ public class UserCredentialsProvider
     private String password;
     private String passwdFile;
     private String[] users;
+
+    /**
+     * Zwraca sumę MD5 stringa
+     *
+     * Uwaga: funkcja ma błąd, jeżeli suma MD5 zaczyna się od 0,
+     * zostanie to 0 zignorowane, przez co funkcja nie jest kompatybilna
+     * z innymi implementacjami MD5 we wszystkich przypadkach.
+     * Dla nas jednak wystarcza.
+     *
+     * @param s Tekst do obliczenia sumy
+     * @return Suma MD5 wprowadzonego tekstu
+     */
+    public static String md5(String s)
+    {
+        try
+        {
+            MessageDigest m = MessageDigest.getInstance("MD5");
+            m.update(s.getBytes(), 0, s.length());
+            return new BigInteger(1, m.digest()).toString(16);
+        }
+        catch (NoSuchAlgorithmException ex)
+        {
+            System.out.println("Błąd: MD5 nie jest wspierany, używam PLAIN");
+            return s;
+        }
+    }
 
     public String[] getUserData()
     {
@@ -82,8 +111,8 @@ public class UserCredentialsProvider
 
             try
             {
-                //return (username.equals("ktos") && password.equals("sim"));
-                return password.equals(getPassword(username));
+                //return (username.equals("ktos") && password.equals("sim"));                
+                return UserCredentialsProvider.md5(password).equals(getPassword(username));
             }
             catch (Exception ex)
             {

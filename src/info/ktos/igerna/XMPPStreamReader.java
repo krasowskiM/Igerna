@@ -225,7 +225,8 @@ class XMPPStreamReader extends Thread
 
             Iq org = new Iq(xmldoc.getElementsByTagName("iq").item(0));
 
-            // ustalanie nowego zasobu
+            // ustalanie nowego zasobu - jeśli klient nie podał nic, zostanie
+            // wygenerowany losowy ciąg podobny do streamid
             String newres = Stream.generateId();
             try
             {
@@ -244,11 +245,13 @@ class XMPPStreamReader extends Thread
             if (IgernaServer.isResourceConnected(parent.clientJID))
             {
                 // jeśli zasób już jest podłączony, mamy konflikt
+                // zachowanie zgodne z RFC 3920, 7 to cancel jeśli serwer
+                // nie obsługuje rozwiązywania takich konfliktów
                 parent.sendToClient(new Iq("", "", bindid, "error", "", org.childXML + StreamError.resourceConflict()));
             }
             else
             {
-                // wysyłanie do klienta potwierdzenia
+                // wysyłanie do klienta potwierdzenia, że się powiodło
                 parent.sendToClient(Iq.BindResult(bindid, parent.clientJID));
                 parent.clientState.setState(ClientState.BOUND);
             }
