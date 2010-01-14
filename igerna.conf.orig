@@ -1,4 +1,5 @@
 bind.port = "5222";
 bind.host = "127.0.0.1";
+xmpp.version = "1.0";
 server.sasl = ( "PLAIN" );
 path.passwd = "passwd";

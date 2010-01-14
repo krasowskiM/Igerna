@@ -26,7 +26,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Klasa udostępniająca sprawdzanie poprawności danych użytkownika
@@ -170,7 +169,7 @@ public class UserCredentialsProvider
     /**
      * Zapis zmodyfikowanej listy użytkowników do pliku
      */
-    public void SaveToFile() throws IOException
+    public void saveToFile() throws IOException
     {
         FileWriter fw = new FileWriter(this.passwdFile);
         BufferedWriter bw = new BufferedWriter(fw);

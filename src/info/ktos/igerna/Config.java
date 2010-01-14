@@ -28,11 +28,11 @@ import java.util.regex.*;
 /**
  * Konfiguracja serwera
  */
-class Config
+public class Config
 {
     private String path;
     private BufferedReader rdr;
-    private String[] lines;
+    private ArrayList<String> lines;
 
     /**
      * Konstruktor klasy Config, ustawianie ścieżki pliku
@@ -63,9 +63,9 @@ class Config
         // TODO: tutaj miała być jakaś optymalizacja, ale zapomniałem jaka
         String result = def;
 
-        for (int i = 0; i < lines.length; i++)
+        for (String s : lines)
         {
-            Matcher m = r.matcher(lines[i]);
+            Matcher m = r.matcher(s);
             if (m.find())
             {
                 Matcher m2 = r2.matcher(m.group());
@@ -98,9 +98,9 @@ class Config
 
         String[] result = def;
 
-        for (int i = 0; i < lines.length; i++)
+        for (String s : lines)
         {
-            Matcher m = r.matcher(lines[i]);
+            Matcher m = r.matcher(s);
             if (m.find())
             {
                 Matcher m2 = r2.matcher(m.group());
@@ -132,7 +132,33 @@ class Config
      */
     public void setStringEntry(String section, String entry, String newValue)
     {
-        // TODO: zapis do pliku konfiguracyjnego
+        String reg = String.format("^%s\\.%s([\\s]*)=([\\s]*)\"[a-z0-9.-]+\";$", section, entry);
+        Pattern r = Pattern.compile(reg);
+
+        int i = 0;
+        boolean f = false;
+        for (String s : lines)
+        {
+            Matcher m = r.matcher(s);
+            if (m.find())
+            {
+                f = true;
+                break;
+            }
+                
+            i++;
+        }
+
+        if (f)
+        {
+            // jeśli znalazło, to zamieniamy
+            lines.set(i, String.format("%s.%s = \"%s\";", section, entry, newValue));
+        }
+        else
+        {
+            // jeśli nie znalazło, to musimy dodać
+            lines.add(String.format("%s.%s = \"%s\";", section, entry, newValue));
+        }
     }
 
     /**
@@ -145,17 +171,35 @@ class Config
     {
         FileReader fileReader = new FileReader(path);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
-        List<String> l = new ArrayList<String>();
+        lines = new ArrayList<String>();
         String line = null;
         while ((line = bufferedReader.readLine()) != null)
         {
             // ignorowanie komentarzy i pustych linii
             if (!line.startsWith("#") && !line.trim().equals(""))
-                l.add(line);
+                lines.add(line);
         }
-        bufferedReader.close();
+        bufferedReader.close();        
+    }
 
-        lines = l.toArray(new String[l.size()]);
+    /**
+     * Zapis (zmodyfikowanej) konfiguracji do pliku
+     *
+     * W trakcie zapisu gubione są niestety komentarze
+     */
+    public void saveFile() throws IOException
+    {
+        FileWriter fw = new FileWriter(this.path);
+        BufferedWriter bw = new BufferedWriter(fw);
+
+        for (String s : lines)
+        {
+            bw.write(s);
+            bw.newLine();
+        }
+
+        bw.close();
+        fw.close();
     }
 
 }
