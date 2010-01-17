@@ -570,7 +570,7 @@ class XMPPStreamReader extends Thread
                     else if (xmlns.equals("http://jabber.org/protocol/disco#info"))
                     {
                         // service discovery (XEP-0030)
-                        // TODO: obsługa service discovery
+                        parent.sendToClient(ServiceDiscovery.get(iq.from, IgernaServer.getBindHost(), iq.id));
                     }
                     else if (xmlns.equals("jabber:iq:version"))
                     {
