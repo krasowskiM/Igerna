@@ -80,7 +80,12 @@ public class UserCredentialsProvider
      */
     public void removeUser(String userName)
     {        
-        users.remove(findUser(userName));
+        removeUser(findUser(userName));
+    }
+
+    public void removeUser(int i)
+    {
+        users.remove(i);
     }
 
     private int findUser(String userName)
@@ -108,11 +113,19 @@ public class UserCredentialsProvider
     public void changeUser(String userName, String newUserName, String newPassword, String newGeckos)
     {
         int i = findUser(userName);
+        changeUser(i, newUserName, newPassword, newGeckos);
+    }
 
+    public void changeUser(int i, String newUserName, String newPassword, String newGeckos)
+    {
         String[] dat = users.get(i);
 
         if (!newUserName.equals(""))
+        {
             dat[0] = newUserName;
+            dat[5] = "/home/" + newUserName;
+        }
+
         if (!newPassword.equals(""))
             dat[1] = newPassword;
         if (!newGeckos.equals(""))
@@ -160,10 +173,10 @@ public class UserCredentialsProvider
 
         for (String s : arr)
         {
-            result = s + separator;
+            result = result + s + separator;
         }
 
-        return result.substring(0, result.length() - separator.length());
+        return result.substring(0, result.length() - separator.length());        
     }
 
     /**

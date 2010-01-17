@@ -26,7 +26,14 @@ import info.ktos.igerna.Config;
 import info.ktos.igerna.IgernaServer;
 import info.ktos.igerna.UserCredentialsProvider;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Vector;
 import javax.swing.JOptionPane;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 /**
  * Klasa reprezentująca okno okienkowej aplikacji do zarządzania
@@ -36,6 +43,8 @@ public class Manager extends javax.swing.JFrame
 {
 
     private Config conf;
+    private UserCredentialsProvider ucp;
+    private DefaultTableModel utm;
 
     /** Creates new form Manager */
     public Manager()
@@ -46,16 +55,93 @@ public class Manager extends javax.swing.JFrame
         try
         {
             conf = new Config("igerna.conf");
-            conf.readFile();
+            conf.readFile();            
         }
         catch (IOException ex)
         {
             JOptionPane.showMessageDialog(rootPane, "Wystąpił błąd odczytu pliku konfiguracyjnego, tworzę nowy plik.", "Igerna", JOptionPane.WARNING_MESSAGE, null);
         }
 
+        try
+        {
+            ucp = new UserCredentialsProvider(conf.getStringEntry("path", "passwd", "passwd"));
+        }
+        catch (IOException ex)
+        {
+            JOptionPane.showMessageDialog(rootPane, "Wystąpił błąd odczytu pliku użytkowników.", "Igerna", JOptionPane.ERROR_MESSAGE, null);
+            System.exit(1);
+        }
+
         jtfHost.setText(conf.getStringEntry("bind", "host", "127.0.0.1"));
         jtfPort.setText(conf.getStringEntry("bind", "port", "5222"));
-    }
+
+
+        utm = new DefaultTableModel(new String[] { "Login użytkonika", "Hasło", "Nazwa" }, 0);
+        jtUsersTable.setModel(utm);
+
+        try
+        {
+            for (String[] s : ucp.getUserData())
+            {
+                utm.addRow(new String[] { s[0], s[1], s[4] });
+            }
+        }
+        catch (Exception ex)
+        {
+            
+        }
+
+        // listener zmian w tabelce
+        jtUsersTable.getModel().addTableModelListener(new TableModelListener() {
+
+            public void tableChanged(TableModelEvent e)
+            {
+                TableModel model = (TableModel)e.getSource();
+
+                if (e.getType() == TableModelEvent.DELETE)
+                {
+                    int row = e.getFirstRow();
+                    ucp.removeUser(row);
+                }
+                else if (e.getType() == TableModelEvent.INSERT)
+                {
+                    DefaultTableModel dtm = (DefaultTableModel)model;
+                    Vector data = dtm.getDataVector();
+
+                    Vector d0 = (Vector)data.elementAt(0);                    
+                                        
+                    ucp.addUser((String)d0.elementAt(0), "", "");
+                }
+                else
+                {
+                    int row = e.getFirstRow();
+                    int col = e.getColumn();
+                    
+
+                    // jeśli zostało zmienione hasło, przelicz je na sumę
+                    // MD5 tego hasła
+                    if (col == 1)
+                    {
+                        String org = (String)model.getValueAt(row, col);
+
+                        // jeśli dane hasła mają 32 znaki to jest to pewnie
+                        // suma kontrolna, prawda?
+                        // brzydki hack, ale działa skutecznie :-)
+                        if (org.length() != 32)
+                        {
+                            String newd = UserCredentialsProvider.md5(org);
+                            model.setValueAt(newd, row, col);
+                        }
+                    }
+                    
+                    // odzwierciedlenie zmian w tabeli w UCP
+                    ucp.changeUser(row, (String)model.getValueAt(row, 0),
+                            (String)model.getValueAt(row, 1),
+                            (String)model.getValueAt(row, 2));
+                }
+            }
+        });
+    }    
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -77,7 +163,9 @@ public class Manager extends javax.swing.JFrame
         jLabel3 = new javax.swing.JLabel();
         jpUserMan = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jUsersTable = new javax.swing.JTable();
+        jtUsersTable = new javax.swing.JTable();
+        jbAddUser = new javax.swing.JButton();
+        jbDeleteUser = new javax.swing.JButton();
         jpButtons = new javax.swing.JPanel();
         jbOK = new javax.swing.JButton();
         jbCancel = new javax.swing.JButton();
@@ -134,7 +222,7 @@ public class Manager extends javax.swing.JFrame
                     .addGroup(jpServerManLayout.createSequentialGroup()
                         .addGap(41, 41, 41)
                         .addComponent(jLabel3)))
-                .addContainerGap(84, Short.MAX_VALUE))
+                .addContainerGap(107, Short.MAX_VALUE))
         );
         jpServerManLayout.setVerticalGroup(
             jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -158,7 +246,7 @@ public class Manager extends javax.swing.JFrame
 
         jtpTabs.addTab("Zarządzanie serwerem", jpServerMan);
 
-        jUsersTable.setModel(new javax.swing.table.DefaultTableModel(
+        jtUsersTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -181,19 +269,41 @@ public class Manager extends javax.swing.JFrame
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jUsersTable);
+        jScrollPane1.setViewportView(jtUsersTable);
+
+        jbAddUser.setText("Dodaj");
+        jbAddUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbAddUserActionPerformed(evt);
+            }
+        });
+
+        jbDeleteUser.setText("Usuń");
+        jbDeleteUser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbDeleteUserActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jpUserManLayout = new javax.swing.GroupLayout(jpUserMan);
         jpUserMan.setLayout(jpUserManLayout);
         jpUserManLayout.setHorizontalGroup(
             jpUserManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jpUserManLayout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(66, Short.MAX_VALUE))
+                .addComponent(jbAddUser, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jbDeleteUser, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 541, Short.MAX_VALUE)
         );
         jpUserManLayout.setVerticalGroup(
             jpUserManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jpUserManLayout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jpUserManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jbAddUser)
+                    .addComponent(jbDeleteUser)))
         );
 
         jtpTabs.addTab("Zarządzanie użytkownikami", jpUserMan);
@@ -217,7 +327,7 @@ public class Manager extends javax.swing.JFrame
         jpButtonsLayout.setHorizontalGroup(
             jpButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jpButtonsLayout.createSequentialGroup()
-                .addContainerGap(397, Short.MAX_VALUE)
+                .addContainerGap(420, Short.MAX_VALUE)
                 .addComponent(jbOK)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jbCancel)
@@ -237,7 +347,7 @@ public class Manager extends javax.swing.JFrame
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jtpTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 523, Short.MAX_VALUE)
+            .addComponent(jtpTabs, javax.swing.GroupLayout.DEFAULT_SIZE, 546, Short.MAX_VALUE)
             .addComponent(jpButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -261,20 +371,22 @@ public class Manager extends javax.swing.JFrame
     private void jbOKActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jbOKActionPerformed
     {//GEN-HEADEREND:event_jbOKActionPerformed
 
+        // ustawianie i zapisywanie konfiguracji
         if (!jtfHost.getText().equals(conf.getStringEntry("bind", "host", "127.0.0.1")))
             conf.setStringEntry("bind", "host", jtfHost.getText());
 
         if (!jtfPort.getText().equals(conf.getStringEntry("bind", "port", "5222")))
-            conf.setStringEntry("bind", "port", jtfPort.getText());
+            conf.setStringEntry("bind", "port", jtfPort.getText());        
 
         try
         {
             conf.saveFile();
+            ucp.saveToFile();
         }
         catch (IOException ex)
         {
             System.out.println(ex.getMessage());        
-            JOptionPane.showMessageDialog(rootPane, "Wystąpił błąd zapisu do pliku konfiguracyjnego!", "Igerna", JOptionPane.ERROR_MESSAGE, null);
+            JOptionPane.showMessageDialog(rootPane, "Wystąpił błąd zapisu do pliku konfiguracyjnego lub pliku użytkowników!", "Igerna", JOptionPane.ERROR_MESSAGE, null);
         }
 
         // zamykamy aplikację i zapisujemy zmiany
@@ -304,6 +416,17 @@ public class Manager extends javax.swing.JFrame
         jbStop.setEnabled(false);
     }//GEN-LAST:event_jbStopActionPerformed
 
+    private void jbAddUserActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jbAddUserActionPerformed
+    {//GEN-HEADEREND:event_jbAddUserActionPerformed
+        utm.addRow(new String[] { "login (zmień to)", "hasło (md5 samo się ustawi)", "przyjazna nazwa" });
+    }//GEN-LAST:event_jbAddUserActionPerformed
+
+    private void jbDeleteUserActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jbDeleteUserActionPerformed
+    {//GEN-HEADEREND:event_jbDeleteUserActionPerformed
+        if (jtUsersTable.getSelectedRow() != -1)
+            utm.removeRow(jtUsersTable.getSelectedRow());
+    }//GEN-LAST:event_jbDeleteUserActionPerformed
+
     /**
     * @param args the command line arguments
     */
@@ -321,14 +444,16 @@ public class Manager extends javax.swing.JFrame
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jUsersTable;
+    private javax.swing.JButton jbAddUser;
     private javax.swing.JButton jbCancel;
+    private javax.swing.JButton jbDeleteUser;
     private javax.swing.JButton jbOK;
     private javax.swing.JButton jbStart;
     private javax.swing.JButton jbStop;
     private javax.swing.JPanel jpButtons;
     private javax.swing.JPanel jpServerMan;
     private javax.swing.JPanel jpUserMan;
+    private javax.swing.JTable jtUsersTable;
     private javax.swing.JTextField jtfHost;
     private javax.swing.JTextField jtfPort;
     private javax.swing.JTabbedPane jtpTabs;
