@@ -96,12 +96,100 @@ public class IgernaServer
     }
 
     /**
+     * Główna metoda, już po sparsowaniu parametrów uruchomieniowych
+     * uruchamia sam proces serwera. Może posłużyć do uruchamiania serwera
+     * z innej klasy na przykład.
+     *
+     * @return
+     */
+    public static boolean startServer()
+    {
+        try
+        {
+            config = new Config(configFile);
+            config.readFile();
+        }
+        catch (FileNotFoundException ex)
+        {
+            System.out.println("Błąd: nie znaleziono pliku konfiguracji, przyjmuję wartości domyślne");
+        }
+        catch (IOException ex)
+        {
+            System.out.println("Błąd: nie mogę wczytać konfiguracji, przyjmuję wartości domyślne");
+        }
+
+        try
+        {
+            // odczyt hosta i portu do którego mam zbindować socket
+            bindPort = Integer.parseInt(config.getStringEntry("bind", "port", "5222"));
+            bindHost = config.getStringEntry("bind", "host", "localhost");
+            // podłączanie gniazda
+            SocketAddress sa = new InetSocketAddress(bindHost, bindPort);
+            serv = new ServerSocket();
+            serv.bind(sa);
+        }
+        catch (IOException ex)
+        {
+            System.out.println("Błąd: nie mogę utworzyć gniazda serwera, sprawdź czy nie jest uruchomiona inna instancja");
+            return false;
+        }
+        catch (NumberFormatException ex)
+        {
+            System.out.println("Błąd: podano niepoprawny port do zbindowania");
+            return false;
+        }
+
+        try
+        {
+            ucp = new UserCredentialsProvider(config.getStringEntry("path", "passwd", "passwd"));
+        }
+        catch (Exception ex)
+        {
+            System.out.println("Błąd: nie mogę utworzyć dostawcy danych użytkowników");
+            return false;
+        }
+
+        workerPool = new ArrayList<Worker>();
+
+        // główna pętla aplikacji
+        // jeśli ktoś się podłączył, to stwórz nowy wątek typu Worker
+        // i czekaj na połączenia dalej
+        while (!isStopped())
+        {
+            Socket clientSocket = null;
+            try
+            {
+                clientSocket = serv.accept();
+            }
+            catch (IOException e)
+            {
+                if (isStopped())
+                {
+                    return true;
+                }
+            }
+            workerPool.add(new Worker(clientSocket));
+            workerPool.get(workerPool.size() - 1).start();
+        }
+
+        return true;
+    }
+
+    /**
      * Zatrzymuje pracę serwera
      */
     public static void stop()
     {
         stopped = true;
-        System.out.println("Status: Zatrzymywanie...");
+        System.out.println("Status: zamykam gniazdo");
+        try
+        {
+            serv.close();
+        }
+        catch (Exception ex)
+        {
+            System.out.println("Błąd: " + ex.getMessage());
+        }
     }
 
     /**
@@ -135,7 +223,7 @@ public class IgernaServer
                 System.exit(0);
             }
             else if (args[0].startsWith("-C"))
-            {                
+            {
                 configFile = args[0].substring(3);
                 System.out.println("Status: konfiguracja z pliku " + configFile);
             }
@@ -145,81 +233,11 @@ public class IgernaServer
                 IgernaServer.showHelp();
                 System.exit(1);
             }
-	}
-
-        // ładowanie pliku konfiguracyjnego
-        // i wczytywanie go do lokalnej tablicy w klasie Config
-        try
-        {
-            config = new Config(configFile);
-            config.readFile();
-        }
-        catch (FileNotFoundException ex)
-        {
-            System.out.println("Błąd: nie znaleziono pliku konfiguracji, przyjmuję wartości domyślne");
-        }
-        catch (IOException ex)
-        {
-            System.out.println("Błąd: nie mogę wczytać konfiguracji, przyjmuję wartości domyślne");
         }
 
-        System.out.println("Status: Uruchamianie...");
-        try
-        {
-            // odczyt hosta i portu do którego mam zbindować socket
-            bindPort = Integer.parseInt(config.getStringEntry("bind", "port", "5222"));
-            bindHost = config.getStringEntry("bind", "host", "localhost");
-            // podłączanie gniazda
-            SocketAddress sa = new InetSocketAddress(bindHost, bindPort);
-            serv = new ServerSocket();
-            serv.bind(sa);
-        }
-        catch (IOException ex)
-        {
-            System.out.println("Błąd: nie mogę utworzyć gniazda serwera, sprawdź czy nie jest uruchomiona inna instancja");
-            System.exit(1);
-        }
-        catch (NumberFormatException ex)
-        {
-            System.out.println("Błąd: podano niepoprawny port do zbindowania");
-            System.exit(1);
-        }
+        System.out.println("Status: uruchamianie");
 
-        try
-        {
-            ucp = new UserCredentialsProvider(config.getStringEntry("path", "passwd", "passwd"));
-        }
-        catch (Exception ex)
-        {
-            System.out.println("Błąd: nie mogę utworzyć dostawcy danych użytkowników");
-            System.exit(1);
-        }
-
-        // tworzenie "puli" moich wątków
-        workerPool = new ArrayList<Worker>();
-
-        // główna pętla aplikacji
-        // jeśli ktoś się podłączył, to stwórz nowy wątek typu Worker
-        // i czekaj na połączenia dalej
-        while(!isStopped())
-        {
-            Socket clientSocket = null;
-            try
-            {
-                clientSocket = serv.accept();
-            }
-            catch (IOException e)
-            {
-                if (isStopped())
-                {                    
-                    return;
-                }
-            }
-
-            // dodawanie nowego wątku klasy Worker do "puli" i uruchamianie go
-            workerPool.add(new Worker(clientSocket));
-            workerPool.get(workerPool.size() -1).start();
-        }
+        startServer();
 
         System.out.println("Status: zatrzymywanie");
         System.exit(0);

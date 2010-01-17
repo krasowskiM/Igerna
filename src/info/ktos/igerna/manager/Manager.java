@@ -23,6 +23,7 @@
 package info.ktos.igerna.manager;
 
 import info.ktos.igerna.Config;
+import info.ktos.igerna.IgernaServer;
 import info.ktos.igerna.UserCredentialsProvider;
 import java.io.IOException;
 import javax.swing.JOptionPane;
@@ -71,6 +72,9 @@ public class Manager extends javax.swing.JFrame
         jLabel1 = new javax.swing.JLabel();
         jtfHost = new javax.swing.JTextField();
         jtfPort = new javax.swing.JTextField();
+        jbStart = new javax.swing.JButton();
+        jbStop = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
         jpUserMan = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jUsersTable = new javax.swing.JTable();
@@ -91,20 +95,46 @@ public class Manager extends javax.swing.JFrame
 
         jtfPort.setText("5222");
 
+        jbStart.setText("Uruchom serwer");
+        jbStart.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbStartActionPerformed(evt);
+            }
+        });
+
+        jbStop.setText("Zatrzymaj serwer");
+        jbStop.setEnabled(false);
+        jbStop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jbStopActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("Serwer można także uruchomić uruchamiając główną klasę aplikacji - IgernaServer");
+
         javax.swing.GroupLayout jpServerManLayout = new javax.swing.GroupLayout(jpServerMan);
         jpServerMan.setLayout(jpServerManLayout);
         jpServerManLayout.setHorizontalGroup(
             jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jpServerManLayout.createSequentialGroup()
-                .addGap(21, 21, 21)
-                .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jtfPort, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jtfHost, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(118, Short.MAX_VALUE))
+                    .addGroup(jpServerManLayout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel2)
+                            .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel1)
+                                .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(jbStart, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jbStop, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jtfPort, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jtfHost, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(jpServerManLayout.createSequentialGroup()
+                        .addGap(41, 41, 41)
+                        .addComponent(jLabel3)))
+                .addContainerGap(84, Short.MAX_VALUE))
         );
         jpServerManLayout.setVerticalGroup(
             jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -117,7 +147,13 @@ public class Manager extends javax.swing.JFrame
                 .addGroup(jpServerManLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jtfPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2))
-                .addContainerGap(264, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(jbStart)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jbStop)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel3)
+                .addContainerGap(174, Short.MAX_VALUE))
         );
 
         jtpTabs.addTab("Zarządzanie serwerem", jpServerMan);
@@ -245,6 +281,29 @@ public class Manager extends javax.swing.JFrame
         Manager.this.dispose();
     }//GEN-LAST:event_jbOKActionPerformed
 
+    private void jbStartActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jbStartActionPerformed
+    {//GEN-HEADEREND:event_jbStartActionPerformed
+        Thread t = new Thread() {
+
+            @Override
+            public void run()
+            {
+                IgernaServer.startServer();
+            }
+        };
+        t.start();
+
+        jbStart.setEnabled(false);
+        jbStop.setEnabled(true);
+    }//GEN-LAST:event_jbStartActionPerformed
+
+    private void jbStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jbStopActionPerformed
+    {//GEN-HEADEREND:event_jbStopActionPerformed
+        IgernaServer.stop();
+        jbStart.setEnabled(true);
+        jbStop.setEnabled(false);
+    }//GEN-LAST:event_jbStopActionPerformed
+
     /**
     * @param args the command line arguments
     */
@@ -260,10 +319,13 @@ public class Manager extends javax.swing.JFrame
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jUsersTable;
     private javax.swing.JButton jbCancel;
     private javax.swing.JButton jbOK;
+    private javax.swing.JButton jbStart;
+    private javax.swing.JButton jbStop;
     private javax.swing.JPanel jpButtons;
     private javax.swing.JPanel jpServerMan;
     private javax.swing.JPanel jpUserMan;
