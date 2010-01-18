@@ -83,6 +83,10 @@ public class UserCredentialsProvider
         removeUser(findUser(userName));
     }
 
+    /**
+     *
+     * @param i
+     */
     public void removeUser(int i)
     {
         users.remove(i);
@@ -116,6 +120,13 @@ public class UserCredentialsProvider
         changeUser(i, newUserName, newPassword, newGeckos);
     }
 
+    /**
+     *
+     * @param i
+     * @param newUserName
+     * @param newPassword
+     * @param newGeckos
+     */
     public void changeUser(int i, String newUserName, String newPassword, String newGeckos)
     {
         String[] dat = users.get(i);
@@ -150,6 +161,8 @@ public class UserCredentialsProvider
      * Konstruktor, odczyt pliku konfiguracyjnego
      * 
      * @param passwdFile
+     * @throws FileNotFoundException
+     * @throws IOException
      */
     public UserCredentialsProvider(String passwdFile) throws FileNotFoundException, IOException
     {
@@ -181,6 +194,7 @@ public class UserCredentialsProvider
 
     /**
      * Zapis zmodyfikowanej listy użytkowników do pliku
+     * @throws IOException
      */
     public void saveToFile() throws IOException
     {
@@ -268,6 +282,10 @@ public class UserCredentialsProvider
         throw new Exception("User not found");        
     }
 
+    /**
+     * Ostatnio pobierane nazwa użytkownika
+     * @return
+     */
     public String lastUsername()
     {
         return this.username;

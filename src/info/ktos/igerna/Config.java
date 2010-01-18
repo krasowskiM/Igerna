@@ -186,6 +186,7 @@ public class Config
      * Zapis (zmodyfikowanej) konfiguracji do pliku
      *
      * W trakcie zapisu gubione są niestety komentarze
+     * @throws IOException
      */
     public void saveFile() throws IOException
     {

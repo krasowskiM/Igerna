@@ -198,7 +198,7 @@ public class IgernaServer
      * Analizuje podane parametry i od tego uruchamia pewne inne, dodatkowe
      * funkcje lub po prostu startuje serwer.
      *
-     * @param Argumenty linii poleceń
+     * @param args
      */
     public static void main(String[] args)
     {

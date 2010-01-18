@@ -30,21 +30,37 @@ public class JID
     private String server;
     private String resource;
 
+    /**
+     * Zwraca nazwę użytkownika
+     * @return
+     */
     public String getUserName()
     {
         return this.userName;
     }
     
+    /**
+     * Zwraca adres serwera
+     * @return
+     */
     public String getServer()
     {
         return this.server;
     }
 
+    /**
+     * Zwraca zasób
+     * @return
+     */
     public String getResource()
     {
         return this.resource;
     }
 
+    /**
+     * Ustawia nowy zasób
+     * @param newres
+     */
     public void setResource(String newres)
     {
         this.resource = newres;

@@ -100,6 +100,10 @@ public class StreamError
         return String.format("<failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>%1s</failure>%2s", err, Stream.end());
     }
 
+    /**
+     * Komunikat błędu, taki zasób już istnieje
+     * @return
+     */
     public static String resourceConflict()
     {
         return "<error type='cancel'><conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' /></error>";
