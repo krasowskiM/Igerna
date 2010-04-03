@@ -1,0 +1,78 @@
+Igerna, wersja 0.2
+README
+
+Igerna. Czym jest Igerna? Jest to projekt, jaki stworzy³em w ramach
+zaliczenia z przedmiotu "Przetwarzanie wspó³bie¿ne i rozproszone",
+gdzie prowadz¹cym by³ dr in¿. Piotr Kopniak
+<http://pluton.pol.lublin.pl/~copy/>.
+
+Igerna jest napisanym w Javie bardzo prostym serwerem protoko³u
+XMPP, otwartego standardu komunikacji natychmiastowej (Instant
+Messaging) [RFC3920].
+
+Igerna napisana jest w jêzyku Java, z wykorzystaniem biblioteki JDK
+w wersji 1.6. Pierwotnie mia³a zostaæ wydana na licencji GNU GPL,
+tu¿ przed jej upublicznieniem zdecydowa³em siê na zmianê licencji
+na GNU LGPL.
+
+Igerna opiera siê o parsowanie XML za pomoc¹ W3C DOM. Wykorzystuje
+poza tym czyste gniazdka. Wykorzystuje klasê do obs³ugi BASE64,
+autorstwa Mikaela Greva, na licencji BSD.
+
+Copyright (C) Marcin Badurowicz <ktos at ktos dot info> 2009-2010.
+http://marcin.badurowicz.net/projekty/Igerna/
+
+Konfiguracja?
+----------------------------------
+Popatrz po pliku igerna.conf. Raczej samodokumentuj¹ce.
+
+Dodatkowe uwagi?
+----------------------------------
+Ten kod zawiera trochê brzydkich hacków w niektórych miejscach. To
+raz. Dwa - zapewne mo¿e byæ zrobiony Ÿle i nieoptymalnie w paru 
+innych miejscach. Trzy - projekt przewidziany by³ hobbystycznie
+(oraz edukacyjnie), ewentualnie jako testowy serwer np. dla twórców
+klientów, by mogli testowaæ go lokalnie.
+
+Pisany w œrodowisku NetBeans 6.8, pliki projektu do³¹czone.
+Systemem kontroli wersji by³ Mercurial.
+
+Jak wygl¹da zgodnoœæ z protoko³em?
+----------------------------------
+Serwer by³ bazowany na XMPP 1.0 - RFC 3920 i RFC 3921. Do tego jest
+obs³uga dwóch rozszerzeñ XMPP - XEP-0030 (Service Discovery) i
+XEP-0092 (Software Version).
+
+Nie do koñca - nie obs³uguje TLS, obs³uguje tylko uwierzytelnianie
+PLAIN w mechaniŸmie SASL. Nieprawid³owo obs³uguje stanzy <presence>,
+ignoruje <presence> o typach zwi¹zanych z subskrypcj¹ i rosterem.
+
+Roster zawsze jest tworzony ze wszystkich u¿ytkowników na serwerze.
+
+Mo¿liwe, ¿e serwer gdzieœ jeszcze niezgodny jest w przetwarzaniu
+<iq>.
+
+Nie obs³uguje wiadomoœci offline.
+
+Mo¿liwe, ¿e nie przewiduje prawid³owo prób po³¹czenia dwóch klientów
+z takiego samego JID.
+
+Nie u¿ywa NODEPREP, RESOURCEPREP w odniesieniu do JID.
+
+Manager?
+----------------------------------
+Wymóg mojego wyk³adowcy. Graficzny interfejs do zarz¹dzania serwerem,
+u¿ytkownikami. Sam u¿ywa³em konsoli do uruchamiania, a plików
+konfiguracyjnych do konfiguracji.
+
+Sk¹d wziê³a siê nazwa?
+----------------------------------
+Od pewnej postaci z legend: Lady Igerny (Igraine) - wed³ug legend 
+arturiañskich matki króla Artura.
+
+S³owo koñcowe?
+----------------------------------
+Je¿eli komuœ siê przyda - super :-)
+
+--
+Marcin (3 kwietnia 2010)
